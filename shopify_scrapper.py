@@ -354,12 +354,6 @@ class ShopifyScrapper:
             #         break
             # if index == 300:
             #     break
-        # print(self.id_by_id_arr)
-        # print(self.product_name_arr)
-        # print(self.price_arr)
-        # print(self.full_link_arr)
-        # print(self.data_value_list_arr)
-        # print(self.variants_arr)
 
         self.save_to_xlsx(self.id_by_id_arr,self.product_name_arr, self.price_arr,self.full_link_arr,
                          self.data_value_list_arr,self.variants_arr,self.related_collections_handle_arr,
@@ -373,7 +367,8 @@ class ShopifyScrapper:
 
 
 
-    def get_menu_links(self,url):
+    def get_menu_links(self):
+        url = self.domain
         all_categpries = []
         response = requests.get(url)
         soup = bs(response.text, 'html.parser')
@@ -387,8 +382,6 @@ class ShopifyScrapper:
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    url = "https://univers-chinois.com/"
-    time.sleep(1)
-    all_categpries = shopify_scrapper.get_menu_links(url)
+    all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
     shopify_scrapper.scrap_shopify(all_categpries)
