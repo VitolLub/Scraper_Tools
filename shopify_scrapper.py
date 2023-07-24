@@ -2,6 +2,7 @@ import time
 from bs4 import BeautifulSoup as bs
 import requests
 from openpyxl import Workbook
+from openpyxl.styles import PatternFill
 import json
 import random
 
@@ -35,8 +36,9 @@ class ShopifyScrapper:
         self.tags_arr = []
         self.vendor_arr = []
         self.type_arr = []
+        self.images_arr_variant = []
     def request_link_by_link(self,link,proxy_index,s):
-        print(link)
+        # print(link)
         # time.sleep(1)
         response = self.make_request(link,proxy_index,s)
         soup = bs(response.text, 'html.parser')
@@ -59,19 +61,30 @@ class ShopifyScrapper:
             price = ''
 
         try:
-            tags_arr = []
+
             # get div with class description
-            full_description = soup.find('div', class_='description').text
-            full_description_html = soup.find('div', class_='description')
+            full_description = str(soup.find('meta', {'property': 'og:description'})['content'])
 
-            # find all strong tags
-            for strong in full_description_html.find_all('strong'):
-                print(strong.text)
-                tag = strong.text
-                if tag.find('@') == -1:
-                    tags_arr.append(strong.text)
+            full_description_html = ''
+            full_description_ht = soup.find('div', class_='description')
 
-        except:
+            # find all p tags
+            for p in full_description_ht.find_all('p'):
+
+                full_description_html += str(p)
+            print(full_description)
+            print(full_description_html)
+
+            # tags_arr = []
+            # # find all strong tags
+            # for strong in full_description_html.find_all('strong'):
+            #     print(strong.text)
+            #     tag = strong.text
+            #     if tag.find('@') == -1:
+            #         tags_arr.append(strong.text)
+
+        except Exception as e:
+            print(e)
             full_description = ''
             full_description_html = ''
 
@@ -172,6 +185,18 @@ class ShopifyScrapper:
         except:
             related_collections_arr = []
 
+        try:
+            product_data = soup.find('div', class_='product_form')
+            # get attributes data-product
+            product_data = product_data['data-product']
+            # convert string to json
+            product_data = json.loads(product_data)
+            tags_arr = product_data['tags']
+
+        except Exception as e:
+            print(e)
+
+
 
         return product_name, price,link,",".join(data_value_list), full_description, full_description_html,title,title_html,ceo_title,ceo_description,images_arr,variants,bullet_points_arr,h2_html,id_by_id,tags_arr, vendor, type,related_collections_arr
     def save_to_xlsx(self,id_by_id_arr,product_name_arr, price_arr,full_link_arr,
@@ -181,7 +206,7 @@ class ShopifyScrapper:
                      vendor_arr,type_arr):
         wb = Workbook()
         ws = wb.active
-        ws.append(["id","product ID","full_link","handle","collection_handele","related_collections_handle","title","title_html","ceo_title","ceo_description","product_name","full_description","full_description_html","h2_html","bullet_points_html","published_at","created_at","vendor","type","tags","price","price_min","price_max","available","price_varies","compare_at_price","compare_at_price_max","compare_at_price_varies","requires_selling_plan","selling_plan_groups","images","featured_image","variants","option1","option2","option3","variant featured_image","variant compare_at_price","variant price"])
+        ws.append(["id","product ID","full_link","handle","collection_handele","related_collections_handle","title","title_html","ceo_title","ceo_description","product_name","full_description","full_description_html","h2_html","bullet_points_html","bullet_points_html","bullet_points_html","published_at","created_at","vendor","type","tags","price","price_min","price_max","available","price_varies","compare_at_price","compare_at_price_max","compare_at_price_varies","requires_selling_plan","selling_plan_groups","images","featured_image","variants","option1","option2","option3","variant featured_image","variant compare_at_price","variant price"])
         for i in range(len(product_name_arr)):
             try:
                 option1 = variants_arr_primary[i][0]
@@ -196,7 +221,30 @@ class ShopifyScrapper:
                 option3 = variants_arr_primary[i][2]
             except:
                 option3 = ''
-            ws.append([str(id_by_id_arr[i]),str(product_id_arr[i]),str(full_link_arr[i]),str(handle_arr[i]),str(related_collections_handle_arr[i]),str(related_collections_handle_arr[i]),str(title_arr[i]),str(title_html_arr[i]),str(ceo_title_arr[i]),str(ceo_description_arr[i]),str(product_name_arr[i]), str(full_description_arr[i]),str(full_description_html_arr[i]),str(h2_html_arr[i]),str(bullet_points_arr[i]),'','',str(vendor_arr[i]),str(type_arr[i]),str(tags_arr[i]),str(price_arr[i]),str(price_arr[i]),str(price_arr[i]),"TRUE","0","","","0","","",str(images_arr[i]),str(imge_primary_arr[i]),str(variants_arr[i]),option1,option2,option3,str(images_arr[i])," ",str(price_arr[i])])
+
+            try:
+                bullet_points_variant1 = bullet_points_arr[i][0]
+            except:
+                bullet_points_variant1 = ''
+
+            try:
+                bullet_points_variant2 = bullet_points_arr[i][1]
+            except:
+                bullet_points_variant2 = ''
+
+            try:
+                bullet_points_variant3 = bullet_points_arr[i][2]
+            except:
+                bullet_points_variant3 = ''
+
+            ws.append([str(id_by_id_arr[i]),str(product_id_arr[i]),str(full_link_arr[i]),str(handle_arr[i]),str(related_collections_handle_arr[i]),str(related_collections_handle_arr[i]),str(title_arr[i]),str(title_html_arr[i]),str(ceo_title_arr[i]),str(ceo_description_arr[i]),str(product_name_arr[i]), str(full_description_arr[i]),str(full_description_html_arr[i]),str(h2_html_arr[i]),str(bullet_points_variant1),str(bullet_points_variant2),str(bullet_points_variant3),'','',str(vendor_arr[i]),str(type_arr[i]),str(tags_arr[i]),str(price_arr[i]),str(price_arr[i]),str(price_arr[i]),"TRUE","0","","","0","","",str(images_arr[i]),str(imge_primary_arr[i]),str(variants_arr[i]),option1,option2,option3,str(self.images_arr_variant[i])," ",str(price_arr[i])])
+
+            ws[str('M') + str(i+2)].fill = PatternFill(bgColor="ADFF2F", fill_type="solid")
+            ws[str('N') + str(i + 2)].fill = PatternFill(bgColor="FFC7CE", fill_type="solid")
+            ws[str('O') + str(i + 2)].fill = PatternFill(bgColor="B0E0E6", fill_type="solid")
+            ws[str('P') + str(i + 2)].fill = PatternFill(bgColor="CD853F", fill_type="solid")
+            ws[str('Q') + str(i + 2)].fill = PatternFill(bgColor="FFEBCD", fill_type="solid")
+
         wb.save("shopify.xlsx")
     def save_to_csv(self,id_by_id_arr,product_name_arr, price_arr,full_link_arr,
                     data_value_list_arr,variants_arr,related_collections_handle_arr,handle_arr,
@@ -297,13 +345,13 @@ class ShopifyScrapper:
                 fill_link = domain + link
                 print(f"link: {fill_link}")
                 id_arr,variants_arr = self.request_link_by_link_to_get_ids(fill_link,proxy,s)
-                print(id_arr)
+                # print(id_arr)
                 for id in id_arr:
                     full_link = fill_link + '?variant=' + str(id)
-                    print(full_link)
+                    # print(full_link)
                     product_name, price,full_link,data_value_list,full_description,full_description_html,title,title_html,ceo_title,ceo_description,images_arr,variants,bullet_points_arr,h2_html,id_by_id,tags_arr,vendor, type, related_collections_arr = self.request_link_by_link(full_link,proxy,s)
-                    print(product_name, price,full_link,data_value_list)
-                    print(id_by_id,id)
+                    # print(product_name, price,full_link,data_value_list)
+                    # print(id_by_id,id)
 
                     self.id_by_id_arr.append(id)
                     self.product_name_arr.append(product_name)
@@ -328,11 +376,12 @@ class ShopifyScrapper:
                         self.imge_primary_arr.append(images_arr[0])
                     except:
                         self.imge_primary_arr.append('')
+                    self.images_arr_variant.append(images_arr[0])
                     self.images_arr.append(','.join(images_arr))
                     self.variants_arr_primary.append(variants)
                     try:
                         # bullet_points_arr to string
-                        bullet_points_arr = ','.join(bullet_points_arr)
+                        # bullet_points_arr = ','.join(bullet_points_arr)
                         # print(f"bullet_points_arr: {len(bullet_points_arr)}")
                         self.bullet_points_arr.append(bullet_points_arr)
                     except:
@@ -342,17 +391,17 @@ class ShopifyScrapper:
                     self.tags_arr.append(','.join(tags_arr))
                     self.vendor_arr.append(vendor)
                     self.type_arr.append(type)
-
+                    print(full_description,full_description_html)
                     print("++++++++++++")
                     print(f'INDEX {index}, {variants}')
                     print("++++++++++++")
                     index += 1
-            #         if index == 300:
+            #         if index == 100:
             #             break
             #
-            #     if index == 300:
+            #     if index == 100:
             #         break
-            # if index == 300:
+            # if index == 100:
             #     break
 
         self.save_to_xlsx(self.id_by_id_arr,self.product_name_arr, self.price_arr,self.full_link_arr,
