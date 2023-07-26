@@ -37,7 +37,16 @@ class ShopifyScrapper:
         self.vendor_arr = []
         self.type_arr = []
         self.images_arr_variant = []
+        self.secure_url_arr = []
+        self.published_at = []
+        self.created_at = []
+        self.available_arr = []
+        self.compare_at_price_varies_arr = []
+        self.price_varies_arr = []
+
     def request_link_by_link(self,link,proxy_index,s):
+        # get id after ?variant=
+        id_lisitng = link.split('?variant=')[1]
         # print(link)
         # time.sleep(1)
         response = self.make_request(link,proxy_index,s)
@@ -60,33 +69,7 @@ class ShopifyScrapper:
         except:
             price = ''
 
-        try:
 
-            # get div with class description
-            full_description = str(soup.find('meta', {'property': 'og:description'})['content'])
-
-            full_description_html = ''
-            full_description_ht = soup.find('div', class_='description')
-
-            # find all p tags
-            for p in full_description_ht.find_all('p'):
-
-                full_description_html += str(p)
-            print(full_description)
-            print(full_description_html)
-
-            # tags_arr = []
-            # # find all strong tags
-            # for strong in full_description_html.find_all('strong'):
-            #     print(strong.text)
-            #     tag = strong.text
-            #     if tag.find('@') == -1:
-            #         tags_arr.append(strong.text)
-
-        except Exception as e:
-            print(e)
-            full_description = ''
-            full_description_html = ''
 
 
         try:
@@ -117,7 +100,6 @@ class ShopifyScrapper:
             else:
                 images = soup.find('div', class_='image__container').find_all('img')
                 for image in images:
-                    print(f"real images {self.https+image['data-src']}")
                     if image['data-src'].find('_300x.') > -1:
                         # replace all _300x. to _800x.
                         images_arr.append(self.https+image['data-src'].replace('_300x.', '_800x.'))
@@ -173,32 +155,63 @@ class ShopifyScrapper:
 
         try:
             related_collections_arr = []
-            related_collections = soup.find('div', class_='product-links').find_all('a')
-            print("related_collections")
-            print(related_collections)
+            try:
+                related_collections = soup.find('div', class_='product-links').find_all('a')
+            except:
+                related_collections = soup.find('div', class_='product_links').find_all('a')
+
+            print('related_collections_href')
             # get href
             for related_collections_a in related_collections:
                 related_collections_href = related_collections_a['href']
+                print(related_collections_href)
                 hendle_pos = related_collections_href.find('/collections/')
                 related_collections_handle = related_collections_href[hendle_pos + 13:]
                 related_collections_arr.append(related_collections_handle)
-        except:
+        except Exception as e:
+            print(e)
             related_collections_arr = []
 
         try:
             product_data = soup.find('div', class_='product_form')
             # get attributes data-product
             product_data = product_data['data-product']
+            # print(product_data)
+            # quit()
             # convert string to json
             product_data = json.loads(product_data)
             tags_arr = product_data['tags']
+            self.published_at.append(product_data['published_at'])
+            self.created_at.append(product_data['created_at'])
+            self.available_arr.append(product_data['available'])
+            self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
+            self.price_varies_arr.append(product_data['price_varies'])
+
+            full_description_html = product_data['content']
+            full_description = product_data['description']
+            # full_description convert to text
+            full_description = bs(full_description, 'html.parser').text
+
+            secure_url = ''
+            for img_variants in product_data['variants']:
+
+                if str(img_variants['id']) == str(id_lisitng):
+                    secure_url = 'https:'+ str(img_variants['featured_image']['src'])
+
+
+            if len(secure_url) == 0:
+                secure_url = ''
 
         except Exception as e:
             print(e)
 
 
 
-        return product_name, price,link,",".join(data_value_list), full_description, full_description_html,title,title_html,ceo_title,ceo_description,images_arr,variants,bullet_points_arr,h2_html,id_by_id,tags_arr, vendor, type,related_collections_arr
+
+
+
+        return product_name, price,link,",".join(data_value_list), full_description, full_description_html,title,title_html,ceo_title,ceo_description,images_arr,variants,bullet_points_arr,h2_html,id_by_id,tags_arr, vendor, type,related_collections_arr,secure_url
+
     def save_to_xlsx(self,id_by_id_arr,product_name_arr, price_arr,full_link_arr,
                     data_value_list_arr,variants_arr,related_collections_handle_arr,handle_arr,
                     full_description_arr,full_description_html_arr,title_arr,title_html_arr,ceo_title_arr,
@@ -206,7 +219,7 @@ class ShopifyScrapper:
                      vendor_arr,type_arr):
         wb = Workbook()
         ws = wb.active
-        ws.append(["id","product ID","full_link","handle","collection_handele","related_collections_handle","title","title_html","ceo_title","ceo_description","product_name","full_description","full_description_html","h2_html","bullet_points_html","bullet_points_html","bullet_points_html","published_at","created_at","vendor","type","tags","price","price_min","price_max","available","price_varies","compare_at_price","compare_at_price_max","compare_at_price_varies","requires_selling_plan","selling_plan_groups","images","featured_image","variants","option1","option2","option3","variant featured_image","variant compare_at_price","variant price"])
+        ws.append(["id","product ID","full_link","handle","collection_handele","related_collections_handle","title","title_html","ceo_title","ceo_description","product_name","full_description","full_description_html","h2_html","description_html","bullet_points_html","bullet_points_html","bullet_points_html","published_at","created_at","vendor","type","tags","price","price_min","price_max","available","price_varies","compare_at_price","compare_at_price_max","compare_at_price_varies","requires_selling_plan","selling_plan_groups","images","featured_image","variants","option1","option2","option3","variant featured_image","variant compare_at_price","variant price"])
         for i in range(len(product_name_arr)):
             try:
                 option1 = variants_arr_primary[i][0]
@@ -237,14 +250,26 @@ class ShopifyScrapper:
             except:
                 bullet_points_variant3 = ''
 
-            ws.append([str(id_by_id_arr[i]),str(product_id_arr[i]),str(full_link_arr[i]),str(handle_arr[i]),str(related_collections_handle_arr[i]),str(related_collections_handle_arr[i]),str(title_arr[i]),str(title_html_arr[i]),str(ceo_title_arr[i]),str(ceo_description_arr[i]),str(product_name_arr[i]), str(full_description_arr[i]),str(full_description_html_arr[i]),str(h2_html_arr[i]),str(bullet_points_variant1),str(bullet_points_variant2),str(bullet_points_variant3),'','',str(vendor_arr[i]),str(type_arr[i]),str(tags_arr[i]),str(price_arr[i]),str(price_arr[i]),str(price_arr[i]),"TRUE","0","","","0","","",str(images_arr[i]),str(imge_primary_arr[i]),str(variants_arr[i]),option1,option2,option3,str(self.images_arr_variant[i])," ",str(price_arr[i])])
+            try:
+                total_description_html = str(h2_html_arr[i]) + str(full_description_html_arr[i]) + str(bullet_points_variant1) + str(bullet_points_variant2) + str(bullet_points_variant3)
+
+            except:
+                pass
+
+            try:
+                ws.append([str(id_by_id_arr[i]),str(product_id_arr[i]),str(full_link_arr[i]),str(handle_arr[i]),str(related_collections_handle_arr[i]),str(related_collections_handle_arr[i]),str(title_arr[i]),str(title_html_arr[i]),str(ceo_title_arr[i]),str(ceo_description_arr[i]),str(product_name_arr[i]), str(full_description_arr[i]),str(total_description_html),str(h2_html_arr[i]),str(full_description_html_arr[i]),str(bullet_points_variant1),str(bullet_points_variant2),str(bullet_points_variant3),str(self.published_at[i]),str(self.created_at[i]),str(vendor_arr[i]),str(type_arr[i]),str(tags_arr[i]),str(price_arr[i]),str(price_arr[i]),str(price_arr[i]),str(self.available_arr[i]),str(self.price_varies_arr[i]),"","",str(self.compare_at_price_varies_arr[i]),"","",str(images_arr[i]),str(imge_primary_arr[i]),str(variants_arr[i]),option1,option2,option3,str(self.secure_url_arr[i])," ",str(price_arr[i])])
+                # add record count in end of the file in A column and fill color
+            except Exception as e:
+                print(e)
 
             ws[str('M') + str(i+2)].fill = PatternFill(bgColor="ADFF2F", fill_type="solid")
             ws[str('N') + str(i + 2)].fill = PatternFill(bgColor="FFC7CE", fill_type="solid")
             ws[str('O') + str(i + 2)].fill = PatternFill(bgColor="B0E0E6", fill_type="solid")
             ws[str('P') + str(i + 2)].fill = PatternFill(bgColor="CD853F", fill_type="solid")
             ws[str('Q') + str(i + 2)].fill = PatternFill(bgColor="FFEBCD", fill_type="solid")
-
+            ws[str('R') + str(i + 2)].fill = PatternFill(bgColor="FF7F50", fill_type="solid")
+        ws.append([f"Total Products: {len(list(dict.fromkeys(id_by_id_arr)))}"])
+        ws[str('A') + str(i + 3)].fill = PatternFill(bgColor="ADFF2F", fill_type="solid")
         wb.save("shopify.xlsx")
     def save_to_csv(self,id_by_id_arr,product_name_arr, price_arr,full_link_arr,
                     data_value_list_arr,variants_arr,related_collections_handle_arr,handle_arr,
@@ -312,7 +337,7 @@ class ShopifyScrapper:
             time.sleep(40)
             return self.make_request(url,proxy,s)
     def scrap_shopify(self,all_categpries):
-        domain = 'https://univers-chinois.com'
+        domain = self.domain
         index = 0
         for category in all_categpries:
             url = domain + category
@@ -327,7 +352,6 @@ class ShopifyScrapper:
             ]
             try:
                 proxy_index = random.choice(ip_addresses)
-                print(proxy_index)
                 proxy = {"http": proxy_index}
                 s = requests.Session()
                 response = self.make_request(url,proxy,s)
@@ -343,13 +367,12 @@ class ShopifyScrapper:
             for link in soup.find_all('a', class_='product-info__caption'):
                 link = link.get('href')
                 fill_link = domain + link
-                print(f"link: {fill_link}")
                 id_arr,variants_arr = self.request_link_by_link_to_get_ids(fill_link,proxy,s)
                 # print(id_arr)
                 for id in id_arr:
                     full_link = fill_link + '?variant=' + str(id)
-                    # print(full_link)
-                    product_name, price,full_link,data_value_list,full_description,full_description_html,title,title_html,ceo_title,ceo_description,images_arr,variants,bullet_points_arr,h2_html,id_by_id,tags_arr,vendor, type, related_collections_arr = self.request_link_by_link(full_link,proxy,s)
+                    print(full_link)
+                    product_name, price,full_link,data_value_list,full_description,full_description_html,title,title_html,ceo_title,ceo_description,images_arr,variants,bullet_points_arr,h2_html,id_by_id,tags_arr,vendor, type, related_collections_arr,secure_url = self.request_link_by_link(full_link,proxy,s)
                     # print(product_name, price,full_link,data_value_list)
                     # print(id_by_id,id)
 
@@ -366,12 +389,32 @@ class ShopifyScrapper:
                     self.ceo_description_arr.append(ceo_description)
 
                     handle, collection_handele = self.get_handle_and_collection_handle(full_link)
-                    print(f"handle: {related_collections_arr}")
+
                     self.related_collections_handle_arr.append(','.join(related_collections_arr))
                     self.handle_arr.append(handle)
                     self.full_description_arr.append(full_description)
-                    self.full_description_html_arr.append(full_description_html)
-                    print(f"images_arr: {images_arr}")
+                    if self.domain == 'https://miss-minceur.com':
+                        full_description_html_res = full_description_html.split('✂')
+                        print(f"full_description_html_res {len(full_description_html_res)}")
+                        self.full_description_html_arr.append(full_description_html)
+                        bullet_points_arr.clear()
+                        # full_description_html_res remove first element
+                        print(len(full_description_html_res[1:]))
+                        full_description_html_step = full_description_html_res[1:]
+                        for elem in full_description_html_step:
+                            bullet_points_arr.append(elem)
+
+                        try:
+                            self.bullet_points_arr.append(bullet_points_arr)
+                        except:
+                            self.bullet_points_arr.append('')
+                    else:
+                        self.full_description_html_arr.append(full_description_html)
+                        try:
+                            self.bullet_points_arr.append(bullet_points_arr)
+                        except:
+                            self.bullet_points_arr.append('')
+
                     try:
                         self.imge_primary_arr.append(images_arr[0])
                     except:
@@ -379,29 +422,23 @@ class ShopifyScrapper:
                     self.images_arr_variant.append(images_arr[0])
                     self.images_arr.append(','.join(images_arr))
                     self.variants_arr_primary.append(variants)
-                    try:
-                        # bullet_points_arr to string
-                        # bullet_points_arr = ','.join(bullet_points_arr)
-                        # print(f"bullet_points_arr: {len(bullet_points_arr)}")
-                        self.bullet_points_arr.append(bullet_points_arr)
-                    except:
-                        self.bullet_points_arr.append('')
+
                     self.h2_html_arr.append(h2_html)
                     self.product_id_arr.append(id_by_id)
                     self.tags_arr.append(','.join(tags_arr))
                     self.vendor_arr.append(vendor)
                     self.type_arr.append(type)
-                    print(full_description,full_description_html)
+                    self.secure_url_arr.append(secure_url)
                     print("++++++++++++")
                     print(f'INDEX {index}, {variants}')
                     print("++++++++++++")
                     index += 1
-            #         if index == 100:
+            #         if index == 10:
             #             break
             #
-            #     if index == 100:
+            #     if index == 10:
             #         break
-            # if index == 100:
+            # if index == 10:
             #     break
 
         self.save_to_xlsx(self.id_by_id_arr,self.product_name_arr, self.price_arr,self.full_link_arr,
@@ -421,7 +458,8 @@ class ShopifyScrapper:
         all_categpries = []
         response = requests.get(url)
         soup = bs(response.text, 'html.parser')
-        for link in soup.find('div', class_='main-nav__wrapper').find_all('a'):
+        # for link in soup.find('div', class_='main-nav__wrapper').find_all('a'):
+        for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
             menu_link = link.get('href')
             if menu_link.startswith('/collections'):
                 all_categpries.append(menu_link)
@@ -431,6 +469,7 @@ class ShopifyScrapper:
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
+    shopify_scrapper.domain = "https://miss-minceur.com"
     all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
     shopify_scrapper.scrap_shopify(all_categpries)
