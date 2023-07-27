@@ -1,16 +1,17 @@
 import time
 from bs4 import BeautifulSoup as bs
 import requests
-from openpyxl import Workbook
+from openpyxl import Workbook,load_workbook
 from openpyxl.styles import PatternFill
 import json
+import sys
 import random
 
 class ShopifyScrapper:
 
     def __init__(self):
         self.url = ''
-        self.id_by_id_arr = []
+        self.id_by_id_arr = list()
         self.id_arr = []
         self.product_name_arr = []
         self.price_arr = []
@@ -38,11 +39,12 @@ class ShopifyScrapper:
         self.type_arr = []
         self.images_arr_variant = []
         self.secure_url_arr = []
-        self.published_at = []
-        self.created_at = []
+        self.published_at = list()
+        self.created_at = list()
         self.available_arr = []
         self.compare_at_price_varies_arr = []
         self.price_varies_arr = []
+        self.product_counter = []
 
     def request_link_by_link(self,link,proxy_index,s):
         # get id after ?variant=
@@ -71,7 +73,6 @@ class ShopifyScrapper:
 
 
 
-
         try:
             title = soup.find('h1',class_="product_name").text
             title_html = soup.find('h1',class_="product_name")
@@ -86,12 +87,12 @@ class ShopifyScrapper:
         except:
             ceo_title = ''
             ceo_description = ''
+
         images_arr = []
         try:
             images = soup.find('div', class_='product_gallery_nav').find_all('img')
             if len(images) > 0:
                 for image in images:
-                    print(self.https+image['src'])
                     if image['src'].find('_300x.') > -1:
                         # replace all _300x. to _800x.
                         images_arr.append(self.https+image['src'].replace('_300x.', '_800x.'))
@@ -164,7 +165,7 @@ class ShopifyScrapper:
             # get href
             for related_collections_a in related_collections:
                 related_collections_href = related_collections_a['href']
-                print(related_collections_href)
+
                 hendle_pos = related_collections_href.find('/collections/')
                 related_collections_handle = related_collections_href[hendle_pos + 13:]
                 related_collections_arr.append(related_collections_handle)
@@ -204,23 +205,49 @@ class ShopifyScrapper:
 
         except Exception as e:
             print(e)
+            # show error line
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print(exc_tb.tb_lineno)
 
-
-
-
-
+            full_description = ''
+            full_description_html = ''
+            secure_url = ''
 
         return product_name, price,link,",".join(data_value_list), full_description, full_description_html,title,title_html,ceo_title,ceo_description,images_arr,variants,bullet_points_arr,h2_html,id_by_id,tags_arr, vendor, type,related_collections_arr,secure_url
+
+    def save_to_xlsx_product_count(self):
+        xlsx_file_path = "shopify.xlsx"
+        wb = load_workbook(xlsx_file_path)
+
+        # Step 2: Select the worksheet where you want to append data
+        sheet_name = "Sheet"  # Change this to the name of your target sheet
+        sheet = wb[sheet_name]
+
+        # Calculate the next row to append data to (assuming data starts from row 2)
+        next_row = sheet.max_row + 1
+
+        sheet.cell(row=next_row, column=1, value="Product Quantity:"+str(len(self.product_counter)))
+
+        wb.save(xlsx_file_path)
+        wb.close()
+
 
     def save_to_xlsx(self,id_by_id_arr,product_name_arr, price_arr,full_link_arr,
                     data_value_list_arr,variants_arr,related_collections_handle_arr,handle_arr,
                     full_description_arr,full_description_html_arr,title_arr,title_html_arr,ceo_title_arr,
                     ceo_description_arr,images_arr,imge_primary_arr,variants_arr_primary,bullet_points_arr,h2_html_arr,product_id_arr,tags_arr,
                      vendor_arr,type_arr):
-        wb = Workbook()
-        ws = wb.active
-        ws.append(["id","product ID","full_link","handle","collection_handele","related_collections_handle","title","title_html","ceo_title","ceo_description","product_name","full_description","full_description_html","h2_html","description_html","bullet_points_html","bullet_points_html","bullet_points_html","published_at","created_at","vendor","type","tags","price","price_min","price_max","available","price_varies","compare_at_price","compare_at_price_max","compare_at_price_varies","requires_selling_plan","selling_plan_groups","images","featured_image","variants","option1","option2","option3","variant featured_image","variant compare_at_price","variant price"])
-        for i in range(len(product_name_arr)):
+        xlsx_file_path = "shopify.xlsx"
+        wb = load_workbook(xlsx_file_path)
+
+        # Step 2: Select the worksheet where you want to append data
+        sheet_name = "Sheet"  # Change this to the name of your target sheet
+        sheet = wb[sheet_name]
+
+        # Calculate the next row to append data to (assuming data starts from row 2)
+        next_row = sheet.max_row + 1
+
+        for i in range(len(id_by_id_arr)):
             try:
                 option1 = variants_arr_primary[i][0]
                 print(f"option1: {option1}")
@@ -251,26 +278,99 @@ class ShopifyScrapper:
                 bullet_points_variant3 = ''
 
             try:
-                total_description_html = str(h2_html_arr[i]) + str(full_description_html_arr[i]) + str(bullet_points_variant1) + str(bullet_points_variant2) + str(bullet_points_variant3)
+                total_description_html = str(h2_html_arr[0]) + str(full_description_html_arr[0]) + str(bullet_points_variant1) + str(bullet_points_variant2) + str(bullet_points_variant3)
 
             except:
-                pass
+                total_description_html = ''
 
-            try:
-                ws.append([str(id_by_id_arr[i]),str(product_id_arr[i]),str(full_link_arr[i]),str(handle_arr[i]),str(related_collections_handle_arr[i]),str(related_collections_handle_arr[i]),str(title_arr[i]),str(title_html_arr[i]),str(ceo_title_arr[i]),str(ceo_description_arr[i]),str(product_name_arr[i]), str(full_description_arr[i]),str(total_description_html),str(h2_html_arr[i]),str(full_description_html_arr[i]),str(bullet_points_variant1),str(bullet_points_variant2),str(bullet_points_variant3),str(self.published_at[i]),str(self.created_at[i]),str(vendor_arr[i]),str(type_arr[i]),str(tags_arr[i]),str(price_arr[i]),str(price_arr[i]),str(price_arr[i]),str(self.available_arr[i]),str(self.price_varies_arr[i]),"","",str(self.compare_at_price_varies_arr[i]),"","",str(images_arr[i]),str(imge_primary_arr[i]),str(variants_arr[i]),option1,option2,option3,str(self.secure_url_arr[i])," ",str(price_arr[i])])
-                # add record count in end of the file in A column and fill color
-            except Exception as e:
-                print(e)
+            # Step 4: Append the data to the selected worksheet
+            # ws.append([str(self.secure_url_arr[i])," ",str(price_arr[i])])
+            sheet.cell(row=next_row, column=1, value=str(id_by_id_arr[i]))
+            sheet.cell(row=next_row, column=2, value=str(product_id_arr[i]))
+            sheet.cell(row=next_row, column=3, value=str(full_link_arr[i]))
+            sheet.cell(row=next_row, column=4, value=str(handle_arr[i]))
+            sheet.cell(row=next_row, column=5, value=str(related_collections_handle_arr[i]))
+            sheet.cell(row=next_row, column=6, value=str(related_collections_handle_arr[i]))
+            sheet.cell(row=next_row, column=7, value=str(title_arr[i]))
+            sheet.cell(row=next_row, column=8, value=str(title_html_arr[i]))
+            sheet.cell(row=next_row, column=9, value=str(ceo_title_arr[i]))
+            sheet.cell(row=next_row, column=10, value=str(ceo_description_arr[i]))
+            sheet.cell(row=next_row, column=11, value=str(product_name_arr[i]))
+            sheet.cell(row=next_row, column=12, value=str(full_description_arr[i]))
+            sheet.cell(row=next_row, column=13, value=str(total_description_html)).fill = PatternFill(start_color='ADFF2F', end_color='ADFF2F', fill_type='solid')
+            sheet.cell(row=next_row, column=14, value=str(h2_html_arr[i])).fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+            sheet.cell(row=next_row, column=15, value=str(full_description_html_arr[i])).fill = PatternFill(start_color='B0E0E6', end_color='B0E0E6', fill_type='solid')
+            sheet.cell(row=next_row, column=16, value=str(bullet_points_variant1)).fill = PatternFill(start_color='CD853F', end_color='CD853F', fill_type='solid')
+            sheet.cell(row=next_row, column=17, value=str(bullet_points_variant2)).fill = PatternFill(start_color='FFEBCD', end_color='FFEBCD', fill_type='solid')
+            sheet.cell(row=next_row, column=18, value=str(bullet_points_variant3)).fill = PatternFill(start_color='FF7F50', end_color='FF7F50', fill_type='solid')
+            sheet.cell(row=next_row, column=19, value=str(self.published_at[i]))
+            sheet.cell(row=next_row, column=20, value=str(self.created_at[i]))
+            sheet.cell(row=next_row, column=21, value=str(vendor_arr[i]))
+            sheet.cell(row=next_row, column=22, value=str(type_arr[i]))
+            sheet.cell(row=next_row, column=23, value=str(tags_arr[i]))
+            sheet.cell(row=next_row, column=24, value=str(price_arr[i]))
+            sheet.cell(row=next_row, column=25, value=str(price_arr[i]))
+            sheet.cell(row=next_row, column=26, value=str(price_arr[i]))
+            sheet.cell(row=next_row, column=27, value=str(self.available_arr[i]))
+            sheet.cell(row=next_row, column=28, value=str(self.price_varies_arr[i]))
+            sheet.cell(row=next_row, column=29, value=str(''))
+            sheet.cell(row=next_row, column=30, value=str(''))
+            sheet.cell(row=next_row, column=31, value=str(self.compare_at_price_varies_arr[i]))
+            sheet.cell(row=next_row, column=32, value=str(''))
+            sheet.cell(row=next_row, column=33, value=str(''))
+            sheet.cell(row=next_row, column=34, value=str(images_arr[i]))
+            sheet.cell(row=next_row, column=35, value=str(imge_primary_arr[i]))
+            sheet.cell(row=next_row, column=36, value=str(variants_arr[i]))
+            sheet.cell(row=next_row, column=37, value=str(option1))
+            sheet.cell(row=next_row, column=38, value=str(option2))
+            sheet.cell(row=next_row, column=39, value=str(option3))
+            sheet.cell(row=next_row, column=40, value=str(self.secure_url_arr[i]))
+            sheet.cell(row=next_row, column=41, value=str(''))
+            sheet.cell(row=next_row, column=42, value=str(price_arr[i]))
+            next_row += 1
 
-            ws[str('M') + str(i+2)].fill = PatternFill(bgColor="ADFF2F", fill_type="solid")
-            ws[str('N') + str(i + 2)].fill = PatternFill(bgColor="FFC7CE", fill_type="solid")
-            ws[str('O') + str(i + 2)].fill = PatternFill(bgColor="B0E0E6", fill_type="solid")
-            ws[str('P') + str(i + 2)].fill = PatternFill(bgColor="CD853F", fill_type="solid")
-            ws[str('Q') + str(i + 2)].fill = PatternFill(bgColor="FFEBCD", fill_type="solid")
-            ws[str('R') + str(i + 2)].fill = PatternFill(bgColor="FF7F50", fill_type="solid")
-        ws.append([f"Total Products: {len(list(dict.fromkeys(id_by_id_arr)))}"])
-        ws[str('A') + str(i + 3)].fill = PatternFill(bgColor="ADFF2F", fill_type="solid")
-        wb.save("shopify.xlsx")
+        # Step 5: Save the changes back to the XLSX file
+        wb.save(xlsx_file_path)
+
+        # Optional: Close the workbook
+        wb.close()
+
+        # clear
+        # get all variables from __init__
+        for name, value in vars(self).items():
+            # clear all variables
+            if type(value) is list and name != 'product_counter':
+                value.clear()
+
+
+
+        # ws = wb.active
+        # ws.append(["id","product ID","full_link","handle","collection_handele","related_collections_handle","title","title_html","ceo_title","ceo_description","product_name","full_description","full_description_html","h2_html","description_html","bullet_points_html","bullet_points_html","bullet_points_html","published_at","created_at","vendor","type","tags","price","price_min","price_max","available","price_varies","compare_at_price","compare_at_price_max","compare_at_price_varies","requires_selling_plan","selling_plan_groups","images","featured_image","variants","option1","option2","option3","variant featured_image","variant compare_at_price","variant price"])
+
+
+        #
+        #     # read data from excel
+        #     wb = load_workbook('data.xlsx')
+        #     ws = wb.active
+        #
+        #     # append data to excel
+        #
+        #
+        #     try:
+        #         ws.append([str(id_by_id_arr[i]),str(product_id_arr[i]),str(full_link_arr[i]),str(handle_arr[i]),str(related_collections_handle_arr[i]),str(related_collections_handle_arr[i]),str(title_arr[i]),str(title_html_arr[i]),str(ceo_title_arr[i]),str(ceo_description_arr[i]),str(product_name_arr[i]), str(full_description_arr[i]),str(total_description_html),str(h2_html_arr[i]),str(full_description_html_arr[i]),str(bullet_points_variant1),str(bullet_points_variant2),str(bullet_points_variant3),str(self.published_at[i]),str(self.created_at[i]),str(vendor_arr[i]),str(type_arr[i]),str(tags_arr[i]),str(price_arr[i]),str(price_arr[i]),str(price_arr[i]),str(self.available_arr[i]),str(self.price_varies_arr[i]),"","",str(self.compare_at_price_varies_arr[i]),"","",str(images_arr[i]),str(imge_primary_arr[i]),str(variants_arr[i]),option1,option2,option3,str(self.secure_url_arr[i])," ",str(price_arr[i])])
+        #         # add record count in end of the file in A column and fill color
+        #     except Exception as e:
+        #         print(e)
+        #
+        #     ws[str('M') + str(i+2)].fill = PatternFill(bgColor="ADFF2F", fill_type="solid")
+        #     ws[str('N') + str(i + 2)].fill = PatternFill(bgColor="FFC7CE", fill_type="solid")
+        #     ws[str('O') + str(i + 2)].fill = PatternFill(bgColor="B0E0E6", fill_type="solid")
+        #     ws[str('P') + str(i + 2)].fill = PatternFill(bgColor="CD853F", fill_type="solid")
+        #     ws[str('Q') + str(i + 2)].fill = PatternFill(bgColor="FFEBCD", fill_type="solid")
+        #     ws[str('R') + str(i + 2)].fill = PatternFill(bgColor="FF7F50", fill_type="solid")
+        # ws.append([f"Total Products: {len(list(dict.fromkeys(id_by_id_arr)))}"])
+        # ws[str('A') + str(i + 3)].fill = PatternFill(bgColor="ADFF2F", fill_type="solid")
+        # wb.save("shopify.xlsx")
     def save_to_csv(self,id_by_id_arr,product_name_arr, price_arr,full_link_arr,
                     data_value_list_arr,variants_arr,related_collections_handle_arr,handle_arr,
                     full_description_arr,full_description_html_arr,title_arr,title_html_arr,ceo_title_arr,
@@ -298,18 +398,7 @@ class ShopifyScrapper:
         # get div with class swatch_options and find all data-id and append to id_arr
         id_arr = []
         variants_arr = []
-        # for div in soup.find_all('div', class_='swatch_options'):
-        #     for data_id in div.find_all('div', {'data-id': True}):
-        #         print(data_id['data-id'])
-        #         id_arr.append(data_id['data-id'])
-        #     # find all div with class option_title
-        #     for variant in div.find_all('div', class_='option_title'):
-        #         # if div has text, append to handle_arr
-        #         if len(div.text) > 0:
-        #             variants_arr.append(variant.text)
         #
-        # print(id_arr)
-        # print(variants_arr)
         scripts = soup.find_all('script')
         for script in scripts:
             # find var meta
@@ -336,6 +425,7 @@ class ShopifyScrapper:
         else:
             time.sleep(40)
             return self.make_request(url,proxy,s)
+
     def scrap_shopify(self,all_categpries):
         domain = self.domain
         index = 0
@@ -378,6 +468,8 @@ class ShopifyScrapper:
 
                     self.id_by_id_arr.append(id)
                     self.product_name_arr.append(product_name)
+                    if product_name not in self.product_counter:
+                        self.product_counter.append(product_name)
                     self.price_arr.append(price)
                     self.full_link_arr.append(full_link)
                     self.data_value_list_arr.append(data_value_list)
@@ -431,23 +523,33 @@ class ShopifyScrapper:
                     self.secure_url_arr.append(secure_url)
                     print("++++++++++++")
                     print(f'INDEX {index}, {variants}')
+                    print(f"ID COUNT {len(self.product_counter)}")
+                    # remove duplicates from list
                     print("++++++++++++")
-                    index += 1
-            #         if index == 10:
-            #             break
-            #
-            #     if index == 10:
-            #         break
-            # if index == 10:
-            #     break
-
-        self.save_to_xlsx(self.id_by_id_arr,self.product_name_arr, self.price_arr,self.full_link_arr,
+                    if index% 200 == 0:
+                        self.save_to_xlsx(self.id_by_id_arr,self.product_name_arr, self.price_arr,self.full_link_arr,
                          self.data_value_list_arr,self.variants_arr,self.related_collections_handle_arr,
                          self.handle_arr,self.full_description_arr,self.full_description_html_arr,
                          self.title_arr,self.title_html_arr,self.ceo_title_arr,self.ceo_description_arr,
                           self.images_arr,self.imge_primary_arr,self.variants_arr_primary,
                           self.bullet_points_arr,self.h2_html_arr,self.product_id_arr,self.tags_arr,
                           self.vendor_arr,self.type_arr)
+                    index += 1
+            #         if index == 84:
+            #             break
+            #
+            #     if index == 84:
+            #         break
+            # if index == 84:
+            #     break
+        self.save_to_xlsx(self.id_by_id_arr, self.product_name_arr, self.price_arr, self.full_link_arr,
+                          self.data_value_list_arr, self.variants_arr, self.related_collections_handle_arr,
+                          self.handle_arr, self.full_description_arr, self.full_description_html_arr,
+                          self.title_arr, self.title_html_arr, self.ceo_title_arr, self.ceo_description_arr,
+                          self.images_arr, self.imge_primary_arr, self.variants_arr_primary,
+                          self.bullet_points_arr, self.h2_html_arr, self.product_id_arr, self.tags_arr,
+                          self.vendor_arr, self.type_arr)
+        self.save_to_xlsx_product_count()
 
 
 
@@ -467,9 +569,18 @@ class ShopifyScrapper:
         return all_categpries
 
 
+    def create_xls_file(self):
+        # create shopify.xlsx file
+
+        wb = Workbook()
+        ws = wb.active
+        ws.append(["id","product ID","full_link","handle","collection_handele","related_collections_handle","title","title_html","ceo_title","ceo_description","product_name","full_description","full_description_html","h2_html","description_html","bullet_points_html","bullet_points_html","bullet_points_html","published_at","created_at","vendor","type","tags","price","price_min","price_max","available","price_varies","compare_at_price","compare_at_price_max","compare_at_price_varies","requires_selling_plan","selling_plan_groups","images","featured_image","variants","option1","option2","option3","variant featured_image","variant compare_at_price","variant price"])
+        wb.save("shopify.xlsx")
+
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
     shopify_scrapper.domain = "https://miss-minceur.com"
+    shopify_scrapper.create_xls_file()
     all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
     shopify_scrapper.scrap_shopify(all_categpries)
