@@ -45,6 +45,8 @@ class ShopifyScrapper:
         self.compare_at_price_varies_arr = []
         self.price_varies_arr = []
         self.product_counter = []
+        self.compare_at_price_arr = []
+        self.compare_at_price_max_arr = []
 
     def request_link_by_link(self,link,proxy_index,s):
         # get id after ?variant=
@@ -83,6 +85,7 @@ class ShopifyScrapper:
         try:
             # get title from head
             ceo_title = soup.find('title').text
+            ceo_title = ceo_title.strip()
             ceo_description = soup.find('meta', {'name': 'description'})['content']
         except:
             ceo_title = ''
@@ -109,15 +112,7 @@ class ShopifyScrapper:
         except:
             images_arr = []
 
-        try:
-            # get selected option
-            variants = soup.find('option', selected='selected').text
-            if variants.find('/') > 0:
-                variants = variants.split('/')
-            else:
-                variants = variants.split(' ')
-        except:
-            variants = []
+
 
         try:
             bullet_points_arr = []
@@ -177,8 +172,8 @@ class ShopifyScrapper:
             product_data = soup.find('div', class_='product_form')
             # get attributes data-product
             product_data = product_data['data-product']
-            # print(product_data)
-            # quit()
+            print(product_data)
+
             # convert string to json
             product_data = json.loads(product_data)
             tags_arr = product_data['tags']
@@ -187,8 +182,17 @@ class ShopifyScrapper:
             self.available_arr.append(product_data['available'])
             self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
             self.price_varies_arr.append(product_data['price_varies'])
+            self.compare_at_price_arr.append(self.cut_compare_price(product_data['compare_at_price']))
+            self.compare_at_price_max_arr.append(self.cut_compare_price(product_data['compare_at_price_max']))
+
 
             full_description_html = product_data['content']
+            # remove h2 from full_description_html
+            soup = bs(full_description_html, 'html.parser')
+            for h2 in soup.find_all('h2'):
+                h2.decompose()
+            full_description_html = str(soup)
+
             full_description = product_data['description']
             # full_description convert to text
             full_description = bs(full_description, 'html.parser').text
@@ -198,6 +202,21 @@ class ShopifyScrapper:
 
                 if str(img_variants['id']) == str(id_lisitng):
                     secure_url = 'https:'+ str(img_variants['featured_image']['src'])
+                    variants = []
+                    if img_variants['option1'] == None:
+                        variants.append('')
+                    else:
+                        variants.append(img_variants['option1'])
+
+                    if img_variants['option2'] == None:
+                        variants.append('')
+                    else:
+                        variants.append(img_variants['option2'])
+
+                    if img_variants['option3'] == None:
+                        variants.append('')
+                    else:
+                        variants.append(img_variants['option3'])
 
 
             if len(secure_url) == 0:
@@ -215,21 +234,29 @@ class ShopifyScrapper:
 
         return product_name, price,link,",".join(data_value_list), full_description, full_description_html,title,title_html,ceo_title,ceo_description,images_arr,variants,bullet_points_arr,h2_html,id_by_id,tags_arr, vendor, type,related_collections_arr,secure_url
 
+    def cut_compare_price(self,compare_at_price):
+        a = str(compare_at_price)
+        pos2 = a[len(a) - 2:]
+        pos1 = a[:len(a) - 2]
+        compare_at_price = str(pos1) + ',' + (pos2)
+
+        return compare_at_price
+
     def save_to_xlsx_product_count(self):
-        xlsx_file_path = "shopify.xlsx"
-        wb = load_workbook(xlsx_file_path)
+            xlsx_file_path = "shopify.xlsx"
+            wb = load_workbook(xlsx_file_path)
 
-        # Step 2: Select the worksheet where you want to append data
-        sheet_name = "Sheet"  # Change this to the name of your target sheet
-        sheet = wb[sheet_name]
+            # Step 2: Select the worksheet where you want to append data
+            sheet_name = "Sheet"  # Change this to the name of your target sheet
+            sheet = wb[sheet_name]
 
-        # Calculate the next row to append data to (assuming data starts from row 2)
-        next_row = sheet.max_row + 1
+            # Calculate the next row to append data to (assuming data starts from row 2)
+            next_row = sheet.max_row + 1
 
-        sheet.cell(row=next_row, column=1, value="Product Quantity:"+str(len(self.product_counter)))
+            sheet.cell(row=next_row, column=1, value="Product Quantity:"+str(len(self.product_counter)))
 
-        wb.save(xlsx_file_path)
-        wb.close()
+            wb.save(xlsx_file_path)
+            wb.close()
 
 
     def save_to_xlsx(self,id_by_id_arr,product_name_arr, price_arr,full_link_arr,
@@ -250,7 +277,6 @@ class ShopifyScrapper:
         for i in range(len(id_by_id_arr)):
             try:
                 option1 = variants_arr_primary[i][0]
-                print(f"option1: {option1}")
             except:
                 option1 = ''
             try:
@@ -313,8 +339,8 @@ class ShopifyScrapper:
             sheet.cell(row=next_row, column=26, value=str(price_arr[i]))
             sheet.cell(row=next_row, column=27, value=str(self.available_arr[i]))
             sheet.cell(row=next_row, column=28, value=str(self.price_varies_arr[i]))
-            sheet.cell(row=next_row, column=29, value=str(''))
-            sheet.cell(row=next_row, column=30, value=str(''))
+            sheet.cell(row=next_row, column=29, value=str(self.compare_at_price_arr[i]))
+            sheet.cell(row=next_row, column=30, value=str(self.compare_at_price_max_arr[i]))
             sheet.cell(row=next_row, column=31, value=str(self.compare_at_price_varies_arr[i]))
             sheet.cell(row=next_row, column=32, value=str(''))
             sheet.cell(row=next_row, column=33, value=str(''))
@@ -343,34 +369,6 @@ class ShopifyScrapper:
                 value.clear()
 
 
-
-        # ws = wb.active
-        # ws.append(["id","product ID","full_link","handle","collection_handele","related_collections_handle","title","title_html","ceo_title","ceo_description","product_name","full_description","full_description_html","h2_html","description_html","bullet_points_html","bullet_points_html","bullet_points_html","published_at","created_at","vendor","type","tags","price","price_min","price_max","available","price_varies","compare_at_price","compare_at_price_max","compare_at_price_varies","requires_selling_plan","selling_plan_groups","images","featured_image","variants","option1","option2","option3","variant featured_image","variant compare_at_price","variant price"])
-
-
-        #
-        #     # read data from excel
-        #     wb = load_workbook('data.xlsx')
-        #     ws = wb.active
-        #
-        #     # append data to excel
-        #
-        #
-        #     try:
-        #         ws.append([str(id_by_id_arr[i]),str(product_id_arr[i]),str(full_link_arr[i]),str(handle_arr[i]),str(related_collections_handle_arr[i]),str(related_collections_handle_arr[i]),str(title_arr[i]),str(title_html_arr[i]),str(ceo_title_arr[i]),str(ceo_description_arr[i]),str(product_name_arr[i]), str(full_description_arr[i]),str(total_description_html),str(h2_html_arr[i]),str(full_description_html_arr[i]),str(bullet_points_variant1),str(bullet_points_variant2),str(bullet_points_variant3),str(self.published_at[i]),str(self.created_at[i]),str(vendor_arr[i]),str(type_arr[i]),str(tags_arr[i]),str(price_arr[i]),str(price_arr[i]),str(price_arr[i]),str(self.available_arr[i]),str(self.price_varies_arr[i]),"","",str(self.compare_at_price_varies_arr[i]),"","",str(images_arr[i]),str(imge_primary_arr[i]),str(variants_arr[i]),option1,option2,option3,str(self.secure_url_arr[i])," ",str(price_arr[i])])
-        #         # add record count in end of the file in A column and fill color
-        #     except Exception as e:
-        #         print(e)
-        #
-        #     ws[str('M') + str(i+2)].fill = PatternFill(bgColor="ADFF2F", fill_type="solid")
-        #     ws[str('N') + str(i + 2)].fill = PatternFill(bgColor="FFC7CE", fill_type="solid")
-        #     ws[str('O') + str(i + 2)].fill = PatternFill(bgColor="B0E0E6", fill_type="solid")
-        #     ws[str('P') + str(i + 2)].fill = PatternFill(bgColor="CD853F", fill_type="solid")
-        #     ws[str('Q') + str(i + 2)].fill = PatternFill(bgColor="FFEBCD", fill_type="solid")
-        #     ws[str('R') + str(i + 2)].fill = PatternFill(bgColor="FF7F50", fill_type="solid")
-        # ws.append([f"Total Products: {len(list(dict.fromkeys(id_by_id_arr)))}"])
-        # ws[str('A') + str(i + 3)].fill = PatternFill(bgColor="ADFF2F", fill_type="solid")
-        # wb.save("shopify.xlsx")
     def save_to_csv(self,id_by_id_arr,product_name_arr, price_arr,full_link_arr,
                     data_value_list_arr,variants_arr,related_collections_handle_arr,handle_arr,
                     full_description_arr,full_description_html_arr,title_arr,title_html_arr,ceo_title_arr,
@@ -457,6 +455,7 @@ class ShopifyScrapper:
             for link in soup.find_all('a', class_='product-info__caption'):
                 link = link.get('href')
                 fill_link = domain + link
+                print(f"fill_link {fill_link}")
                 id_arr,variants_arr = self.request_link_by_link_to_get_ids(fill_link,proxy,s)
                 # print(id_arr)
                 for id in id_arr:
@@ -488,7 +487,7 @@ class ShopifyScrapper:
                     if self.domain == 'https://miss-minceur.com':
                         full_description_html_res = full_description_html.split('✂')
                         print(f"full_description_html_res {len(full_description_html_res)}")
-                        self.full_description_html_arr.append(full_description_html)
+                        self.full_description_html_arr.append(full_description_html_res[0])
                         bullet_points_arr.clear()
                         # full_description_html_res remove first element
                         print(len(full_description_html_res[1:]))
@@ -535,13 +534,13 @@ class ShopifyScrapper:
                           self.bullet_points_arr,self.h2_html_arr,self.product_id_arr,self.tags_arr,
                           self.vendor_arr,self.type_arr)
                     index += 1
-            #         if index == 84:
-            #             break
-            #
-            #     if index == 84:
-            #         break
-            # if index == 84:
-            #     break
+                    if index == 84:
+                        break
+
+                if index == 84:
+                    break
+            if index == 84:
+                break
         self.save_to_xlsx(self.id_by_id_arr, self.product_name_arr, self.price_arr, self.full_link_arr,
                           self.data_value_list_arr, self.variants_arr, self.related_collections_handle_arr,
                           self.handle_arr, self.full_description_arr, self.full_description_html_arr,
@@ -584,3 +583,4 @@ if __name__ == "__main__":
     all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
     shopify_scrapper.scrap_shopify(all_categpries)
+
