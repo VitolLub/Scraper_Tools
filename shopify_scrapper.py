@@ -534,13 +534,13 @@ class ShopifyScrapper:
                           self.bullet_points_arr,self.h2_html_arr,self.product_id_arr,self.tags_arr,
                           self.vendor_arr,self.type_arr)
                     index += 1
-                    if index == 84:
-                        break
-
-                if index == 84:
-                    break
-            if index == 84:
-                break
+            #         if index == 84:
+            #             break
+            #
+            #     if index == 84:
+            #         break
+            # if index == 84:
+            #     break
         self.save_to_xlsx(self.id_by_id_arr, self.product_name_arr, self.price_arr, self.full_link_arr,
                           self.data_value_list_arr, self.variants_arr, self.related_collections_handle_arr,
                           self.handle_arr, self.full_description_arr, self.full_description_html_arr,
