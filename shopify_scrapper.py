@@ -172,7 +172,6 @@ class ShopifyScrapper:
             product_data = soup.find('div', class_='product_form')
             # get attributes data-product
             product_data = product_data['data-product']
-            print(product_data)
 
             # convert string to json
             product_data = json.loads(product_data)
@@ -198,11 +197,15 @@ class ShopifyScrapper:
             full_description = bs(full_description, 'html.parser').text
 
             secure_url = ''
+            variants = []
             for img_variants in product_data['variants']:
 
                 if str(img_variants['id']) == str(id_lisitng):
-                    secure_url = 'https:'+ str(img_variants['featured_image']['src'])
-                    variants = []
+                    try:
+                        secure_url = 'https:'+ str(img_variants['featured_image']['src'])
+                    except:
+                        secure_url = 'none'
+
                     if img_variants['option1'] == None:
                         variants.append('')
                     else:
@@ -234,11 +237,13 @@ class ShopifyScrapper:
 
         return product_name, price,link,",".join(data_value_list), full_description, full_description_html,title,title_html,ceo_title,ceo_description,images_arr,variants,bullet_points_arr,h2_html,id_by_id,tags_arr, vendor, type,related_collections_arr,secure_url
 
-    def cut_compare_price(self,compare_at_price):
-        a = str(compare_at_price)
-        pos2 = a[len(a) - 2:]
-        pos1 = a[:len(a) - 2]
-        compare_at_price = str(pos1) + ',' + (pos2)
+    def cut_compare_price(self,compare_at_price): 
+
+        if compare_at_price != 0:
+            a = str(compare_at_price)
+            pos2 = a[len(a) - 2:]
+            pos1 = a[:len(a) - 2]
+            compare_at_price = str(pos1) + ',' + (pos2)
 
         return compare_at_price
 
@@ -551,16 +556,13 @@ class ShopifyScrapper:
         self.save_to_xlsx_product_count()
 
 
-
-
-
     def get_menu_links(self):
         url = self.domain
         all_categpries = []
         response = requests.get(url)
         soup = bs(response.text, 'html.parser')
         # for link in soup.find('div', class_='main-nav__wrapper').find_all('a'):
-        for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
+        for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
             menu_link = link.get('href')
             if menu_link.startswith('/collections'):
                 all_categpries.append(menu_link)
@@ -578,7 +580,7 @@ class ShopifyScrapper:
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.domain = "https://miss-minceur.com"
+    shopify_scrapper.domain = 'https://univers-chinois.com' #"https://miss-minceur.com"
     shopify_scrapper.create_xls_file()
     all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
