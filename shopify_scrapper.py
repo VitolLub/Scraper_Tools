@@ -68,16 +68,13 @@ class ShopifyScrapper:
             fill_description_primary = full_description_html_res[0]
             self.full_description_html_arr.append(full_description_html_res[0])
             bullet_points_arr.clear()
+
             # full_description_html_res remove first element
             print(len(full_description_html_res[1:]))
             full_description_html_step = full_description_html_res[1:]
             for elem in full_description_html_step:
                 bullet_points_arr.append(elem)
 
-            # try:
-            #     self.bullet_points_arr.append(bullet_points_arr)
-            # except:
-            #     self.bullet_points_arr.append('')
 
         elif self.domain == 'https://univers-chinois.com':
             # find all p tags
@@ -99,14 +96,13 @@ class ShopifyScrapper:
         # converrt into soup html
         soup = bs(response.text, 'html.parser')
 
-
         product_data = soup.find('div', class_='product_form')
 
         # get attributes data-product
         product_data = product_data['data-product']
         # print(product_data)
 
-        # print(product_data)
+
         product_data = json.loads(product_data)
         produc_id = product_data['id']
         product_title = product_data['title']
@@ -244,8 +240,6 @@ class ShopifyScrapper:
             else:
                 variants.append(product['option3'])
 
-
-
             self.related_collections_handle_arr.append(','.join(related_col_arr))
             self.handle_arr.append(related_col_arr)
             self.full_description_arr.append(full_description)
@@ -255,6 +249,7 @@ class ShopifyScrapper:
                 self.imge_primary_arr.append(images_arr[0])
             except:
                 self.imge_primary_arr.append('')
+
             self.images_arr_variant.append(images_arr[0])
             self.images_arr.append(','.join(images_arr))
             self.variants_arr_primary.append(variants)
@@ -404,6 +399,7 @@ class ShopifyScrapper:
         # Optional: Close the workbook
         wb.close()
         self.increment_index += len(dict.fromkeys(self.product_id_arr))
+
         # clear
         # get all variables from __init__
         for name, value in vars(self).items():
@@ -422,6 +418,7 @@ class ShopifyScrapper:
             writer.writerow(["id","full_link","handle","collection_handele","related_collections_handle","title","title_html","ceo_title","ceo_description","product_name","full_description","full_description_html","h2_html","bullet_points_html","published_at","created_at","vendor","type","tags","price","price_min","price_max","available","price_varies","compare_at_price","compare_at_price_max","compare_at_price_varies","requires_selling_plan","selling_plan_groups","images","featured_image","variants","variant featured_image","variant compare_at_price","variant price"])
             for i in range(len(product_name_arr)):
                 writer.writerow([str(id_by_id_arr[i]),str(full_link_arr[i]),str(handle_arr[i]),str(related_collections_handle_arr[i]),str(related_collections_handle_arr[i]),str(title_arr[i]),str(title_html_arr[i]),str(ceo_title_arr[i]),str(ceo_description_arr[i]),str(product_name_arr[i]), str(full_description_arr[i]),str(full_description_html_arr[i]),'','','','','','','',str(price_arr[i]),str(price_arr[i]),str(price_arr[i]),"TRUE","0","","","0","","",str(images_arr[i]),str(imge_primary_arr[i]),str(variants_arr[i][0]),str(images_arr[i]),"",str(price_arr[i])])
+
     def get_handle_and_collection_handle(self,link):
         # remove all after ? in link
         print(link)
@@ -431,7 +428,6 @@ class ShopifyScrapper:
 
     def request_link_by_link_to_get_ids(self,link,proxy,s):
         # request link
-        # time.sleep(1)
         response = self.make_request(link,proxy,s)
         soup = bs(response.text, 'html.parser')
 
@@ -458,6 +454,7 @@ class ShopifyScrapper:
                 if len(div.text) > 0:
                     variants_arr.append(variant.text)
         return id_arr,variants_arr
+
     def make_request(self,url,proxy,s):
         response = s.get(url, proxies=proxy, verify=False, timeout=5)
         if response.status_code == 200:
