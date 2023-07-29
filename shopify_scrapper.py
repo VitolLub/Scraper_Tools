@@ -64,13 +64,11 @@ class ShopifyScrapper:
         fill_description_primary = ''
         if self.domain == 'https://miss-minceur.com':
             full_description_html_res = full_description_html.split('✂')
-            print(f"full_description_html_res {len(full_description_html_res)}")
             fill_description_primary = full_description_html_res[0]
             self.full_description_html_arr.append(full_description_html_res[0])
             bullet_points_arr.clear()
 
             # full_description_html_res remove first element
-            print(len(full_description_html_res[1:]))
             full_description_html_step = full_description_html_res[1:]
             for elem in full_description_html_step:
                 bullet_points_arr.append(elem)
@@ -82,7 +80,6 @@ class ShopifyScrapper:
             index = 0
             for p_tag in p_tags:
                 # if p tag has parent div
-                print(p_tag)
                 if index < 2:
                     fill_description_primary += str(p_tag)
                 index += 1
