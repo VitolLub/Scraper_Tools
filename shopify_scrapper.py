@@ -10,6 +10,7 @@ import random
 class ShopifyScrapper:
 
     def __init__(self):
+        self.dublicate = []
         self.increment_index = 0
         self.url = ''
         self.id_by_id_arr = list()
@@ -51,7 +52,10 @@ class ShopifyScrapper:
         self.price_min_arr = []
         self.price_max_arr = []
 
-    def cut_full_description(self,full_description_html):
+    def cut_full_description(self,soup):
+        # print("cut_full_description2")
+        h2_html_origin = ''
+        full_description_html = soup.find('div', class_='description')
         try:
             bullet_points_arr = []
             bullet_points = full_description_html.find_all('dl', class_='accordion')
@@ -59,22 +63,68 @@ class ShopifyScrapper:
                 # get html
                 bullet_points_arr.append(str(bullet_point))
         except Exception as e:
+            print(e)
             bullet_points_arr = []
 
+        # print("cut_full_description3")
+
         fill_description_primary = ''
+        full_description_html = ''
         if self.domain == 'https://miss-minceur.com':
-            full_description_html_res = full_description_html.split('✂')
-            fill_description_primary = full_description_html_res[0]
-            self.full_description_html_arr.append(full_description_html_res[0])
+            # print("cut_full_description4")
+            full_description_html = soup.find('div', class_='description bottom')
+
+            # remove h2
+            h2_html = full_description_html.find_all('h2')
+            index = 0
+            for h2 in h2_html:
+                if index == 0:
+                    h2_html_origin = str(h2)
+                h2.decompose()
+                index += 1
+
+            # get html
+            full_description_html = str(full_description_html)
+
+            full_description_html_res = []
+            if str(full_description_html).find('✂') != -1:
+                full_description_html_res = str(full_description_html).split('✂')
+            if str(full_description_html).find('▶') != -1:
+                full_description_html_res = str(full_description_html).split('▶')
+            if str(full_description_html).find('👗') != -1:
+                full_description_html_res = str(full_description_html).split('👗')
+
+            try:
+                fill_description_primary = full_description_html_res[0]
+            except Exception as e:
+                fill_description_primary = full_description_html
+
+
             bullet_points_arr.clear()
 
             # full_description_html_res remove first element
             full_description_html_step = full_description_html_res[1:]
             for elem in full_description_html_step:
                 bullet_points_arr.append(elem)
+            # print(soup)
+            try:
+                related_col_arr = []
+                related_collections = soup.find('div', class_='product_links').find_all('a')
+                for related_collection in related_collections:
+                    # print(related_collection)
+                    related_collection = related_collection['href']
+                    handle, collection_handele = self.get_handle_and_collection_handle(related_collection)
+                    # print(handle)
+                    related_col_arr.append(handle)
+            except Exception as e:
+                print(e)
+                related_col_arr = []
 
 
         elif self.domain == 'https://univers-chinois.com':
+            related_col_arr = []
+            fill_description_primary = ''
+            full_description_html = soup.find('div', class_='description')
             # find all p tags
             p_tags = full_description_html.find_all('p')
             index = 0
@@ -84,10 +134,21 @@ class ShopifyScrapper:
                     fill_description_primary += str(p_tag)
                 index += 1
 
-        return fill_description_primary,bullet_points_arr
+            try:
+
+                related_collections = soup.find('div', class_='product-links').find_all('a')
+                for related_collection in related_collections:
+                    related_collection = related_collection['href']
+                    handle, collection_handele = self.get_handle_and_collection_handle(related_collection)
+                    related_col_arr.append(handle)
+            except:
+                related_col_arr = []
+
+        return fill_description_primary,bullet_points_arr,related_col_arr
 
     def request_link_by_link(self,link,proxy_index,s):
-        # make request
+        print("request_link_by_link")
+         # make request
         response = self.make_request(link, proxy_index, s)
 
         # converrt into soup html
@@ -97,10 +158,10 @@ class ShopifyScrapper:
 
         # get attributes data-product
         product_data = product_data['data-product']
-        # print(product_data)
 
-
+        images_arr = []
         product_data = json.loads(product_data)
+        # print(product_data)
         produc_id = product_data['id']
         product_title = product_data['title']
         product_handle = product_data['handle']
@@ -109,48 +170,56 @@ class ShopifyScrapper:
         vendor = product_data['vendor']
         product_type = product_data['type']
         tags = product_data['tags']
-
-        try:
-            # get title from head
-            ceo_title = soup.find('title').text
-            ceo_title = ceo_title.strip()
-            ceo_description = soup.find('meta', {'name': 'description'})['content']
-        except:
-            ceo_title = ''
-            ceo_description = ''
-
-        images_arr = []
-        try:
-            images = soup.find('div', class_='product_gallery_nav').find_all('img')
-            if len(images) > 0:
-                for image in images:
-                    if image['src'].find('_300x.') > -1:
-                        # replace all _300x. to _800x.
-                        images_arr.append(self.https + image['src'].replace('_300x.', '_800x.'))
-                    else:
-                        images_arr.append(self.https + image['src'])
-            else:
-                images = soup.find('div', class_='image__container').find_all('img')
-                for image in images:
-                    if image['data-src'].find('_300x.') > -1:
-                        # replace all _300x. to _800x.
-                        images_arr.append(self.https + image['data-src'].replace('_300x.', '_800x.'))
-                    else:
-                        images_arr.append(self.https + image['data-src'])
-        except:
-            images_arr = []
-
-        try:
-            h2_html = soup.find('div', class_='description').find('h2')
-        except:
-            h2_html = ''
-        try:
-            title_html = soup.find('h1',class_="product_name")
-        except:
-            title_html = ''
-
-
         variants_arr = []
+        secure_url = ''
+        full_description_html_primary = ''
+        bullet_points_arr = []
+        related_col_arr = []
+
+        print("cut_full_description")
+        full_description_html_primary, bullet_points_arr, related_col_arr = self.cut_full_description(soup)
+
+
+        full_description = product_data['description']
+
+        all_desc = bs(full_description, 'html.parser')
+        index = 0
+        for h2 in all_desc.find_all('h2'):
+            if index == 0:
+                h2_html_origin = str(h2)
+            h2.decompose()
+            index += 1
+            break
+
+        # full_description_html_primary = str(all_desc)
+        # print(full_description_html_primary)
+        # quit()
+        full_description = bs(full_description, 'html.parser').text
+
+        # get title from head
+        ceo_title = soup.find('title').text
+        ceo_title = ceo_title.strip()
+        ceo_description = soup.find('meta', {'name': 'description'})['content']
+
+        images = soup.find('div', class_='product_gallery_nav').find_all('img')
+        if len(images) > 0:
+            for image in images:
+                if image['src'].find('_300x.') > -1:
+                    # replace all _300x. to _800x.
+                    images_arr.append(self.https + image['src'].replace('_300x.', '_800x.'))
+                else:
+                    images_arr.append(self.https + image['src'])
+        else:
+            images = soup.find('div', class_='image__container').find_all('img')
+            for image in images:
+                if image['data-src'].find('_300x.') > -1:
+                    # replace all _300x. to _800x.
+                    images_arr.append(self.https + image['data-src'].replace('_300x.', '_800x.'))
+                else:
+                    images_arr.append(self.https + image['data-src'])
+
+        title_html = soup.find('h1', class_="product_name")
+
         for div in soup.find_all('div', class_='swatch_options'):
             for variant in div.find_all('div', class_='option_title'):
                 # if div has text, append to handle_arr
@@ -158,113 +227,87 @@ class ShopifyScrapper:
                     variants_arr.append(variant.text)
         data_value_list = []
         # if div has data-value, append to data_value_list
+
         for div in soup.find_all('div', {'data-value': True}):
             data_value_list.append(div['data-value'])
-        try:
-            related_col_arr = []
-            related_collections = soup.find('div', class_='product-links').find_all('a')
-            for related_collection in related_collections:
-                related_collection = related_collection['href']
-                handle, collection_handele = self.get_handle_and_collection_handle(related_collection)
-                related_col_arr.append(handle)
-        except:
-            related_collections = ''
 
-        try:
-            full_description_html = product_data['content']
-            # remove h2 from full_description_html
-            soup = bs(full_description_html, 'html.parser')
-            for h2 in soup.find_all('h2'):
-                h2.decompose()
 
-            full_description_html_primary,bullet_points_arr = self.cut_full_description(soup)
 
-            full_description = product_data['description']
-            full_description = bs(full_description, 'html.parser').text
-
-            secure_url = ''
-            if len(secure_url) == 0:
-                secure_url = ''
-
-        except Exception as e:
-            print(e)
-            # show error line
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print(exc_tb.tb_lineno)
-
-            full_description = ''
 
         id_by_id = product_data['id']
         vendor = product_data['vendor']
-        type  =  product_data['type']
+        type = product_data['type']
         tags = product_data['tags']
 
-        print(id_by_id)
         for product in product_data['variants']:
-            self.id_by_id_arr.append(product['id'])
-            self.product_name_arr.append(product_title)
-            self.price_arr.append(self.cut_compare_price(product_data['price']))
-            self.price_min_arr.append(self.cut_compare_price(product_data['price_min']))
-            self.price_max_arr.append(self.cut_compare_price(product_data['price_max']))
-            self.full_link_arr.append(link)
-            self.data_value_list_arr.append(data_value_list)
-            self.variants_arr.append(','.join(variants_arr))
-            # title section
-            self.title_arr.append(product_title)
-            self.title_html_arr.append(title_html)
-            self.ceo_title_arr.append(ceo_title)
-            self.ceo_description_arr.append(ceo_description)
-            self.full_description_html_arr.append(full_description_html_primary)
-            self.bullet_points_arr.append(bullet_points_arr)
-            try:
-                secure_url = 'https:' + str(product['featured_image']['src'])
-            except:
-                secure_url = 'none'
+            if product['id'] not in self.dublicate:
+                self.dublicate.append(product['id'])
 
-            variants = []
-            if product['option1'] == None:
-                variants.append('')
-            else:
-                variants.append(product['option1'])
+                self.id_by_id_arr.append(product['id'])
+                self.product_name_arr.append(product_title)
+                self.full_description_html_arr.append(full_description_html_primary)
+                self.price_arr.append(self.cut_compare_price(product_data['price']))
+                self.price_min_arr.append(self.cut_compare_price(product_data['price_min']))
+                self.price_max_arr.append(self.cut_compare_price(product_data['price_max']))
+                self.full_link_arr.append(link)
+                self.data_value_list_arr.append(data_value_list)
+                self.variants_arr.append(','.join(variants_arr))
+                # title section
+                self.title_arr.append(product_title)
+                self.title_html_arr.append(title_html)
+                self.ceo_title_arr.append(ceo_title)
+                self.ceo_description_arr.append(ceo_description)
+                self.full_description_html_arr.append(full_description_html_primary)
+                self.bullet_points_arr.append(bullet_points_arr)
+                try:
+                    secure_url = 'https:' + str(product['featured_image']['src'])
+                except:
+                    secure_url = 'none'
 
-            if product['option2'] == None:
-                variants.append('')
-            else:
-                variants.append(product['option2'])
+                variants = []
+                if product['option1'] == None:
+                    variants.append('')
+                else:
+                    variants.append(product['option1'])
 
-            if product['option3'] == None:
-                variants.append('')
-            else:
-                variants.append(product['option3'])
+                if product['option2'] == None:
+                    variants.append('')
+                else:
+                    variants.append(product['option2'])
 
-            self.related_collections_handle_arr.append(','.join(related_col_arr))
-            self.handle_arr.append(related_col_arr)
-            self.full_description_arr.append(full_description)
+                if product['option3'] == None:
+                    variants.append('')
+                else:
+                    variants.append(product['option3'])
+
+                self.related_collections_handle_arr.append(','.join(related_col_arr))
+                self.handle_arr.append(related_col_arr)
+                self.full_description_arr.append(full_description)
+
+                try:
+                    self.imge_primary_arr.append(images_arr[0])
+                except:
+                    self.imge_primary_arr.append('')
+
+                self.images_arr_variant.append(images_arr[0])
+                self.images_arr.append(','.join(images_arr))
+                self.variants_arr_primary.append(variants)
+                self.h2_html_arr.append(str(h2_html_origin))
+                self.product_id_arr.append(id_by_id)
+                self.tags_arr.append(','.join(tags))
+                self.vendor_arr.append(vendor)
+                self.type_arr.append(type)
+                self.secure_url_arr.append(secure_url)
+
+                self.published_at.append(product_data['published_at'])
+                self.created_at.append(product_data['created_at'])
+                self.available_arr.append(product_data['available'])
+                self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
+                self.price_varies_arr.append(product_data['price_varies'])
+                self.compare_at_price_arr.append(self.cut_compare_price(product_data['compare_at_price']))
+                self.compare_at_price_max_arr.append(self.cut_compare_price(product_data['compare_at_price_max']))
 
 
-            try:
-                self.imge_primary_arr.append(images_arr[0])
-            except:
-                self.imge_primary_arr.append('')
-
-            self.images_arr_variant.append(images_arr[0])
-            self.images_arr.append(','.join(images_arr))
-            self.variants_arr_primary.append(variants)
-
-            self.h2_html_arr.append(h2_html)
-            self.product_id_arr.append(id_by_id)
-            self.tags_arr.append(','.join(tags))
-            self.vendor_arr.append(vendor)
-            self.type_arr.append(type)
-            self.secure_url_arr.append(secure_url)
-
-            self.published_at.append(product_data['published_at'])
-            self.created_at.append(product_data['created_at'])
-            self.available_arr.append(product_data['available'])
-            self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
-            self.price_varies_arr.append(product_data['price_varies'])
-            self.compare_at_price_arr.append(self.cut_compare_price(product_data['compare_at_price']))
-            self.compare_at_price_max_arr.append(self.cut_compare_price(product_data['compare_at_price_max']))
 
 
     def cut_compare_price(self,compare_at_price):
@@ -345,11 +388,12 @@ class ShopifyScrapper:
                 total_description_html = ''
 
             # Step 4: Append the data to the selected worksheet
-            # ws.append([str(self.secure_url_arr[i])," ",str(price_arr[i])])
+            # print(self.handle_arr)
+
             sheet.cell(row=next_row, column=1, value=str(id_by_id_arr[i]))
             sheet.cell(row=next_row, column=2, value=str(product_id_arr[i]))
             sheet.cell(row=next_row, column=3, value=str(full_link_arr[i]))
-            sheet.cell(row=next_row, column=4, value=str(handle_arr[i][0]))
+            sheet.cell(row=next_row, column=4, value=str(self.handle_arr[i][0]))
             sheet.cell(row=next_row, column=5, value=str(related_collections_handle_arr[i]))
             sheet.cell(row=next_row, column=6, value=str(related_collections_handle_arr[i]))
             sheet.cell(row=next_row, column=7, value=str(title_arr[i]))
@@ -390,6 +434,7 @@ class ShopifyScrapper:
             sheet.cell(row=next_row, column=42, value=str(price_arr[i]))
             next_row += 1
 
+
         # Step 5: Save the changes back to the XLSX file
         wb.save(xlsx_file_path)
 
@@ -401,7 +446,7 @@ class ShopifyScrapper:
         # get all variables from __init__
         for name, value in vars(self).items():
             # clear all variables
-            if type(value) is list and name != 'product_counter':
+            if type(value) is list and name != 'product_counter' and name != 'dublicate':
                 value.clear()
 
 
@@ -492,8 +537,14 @@ class ShopifyScrapper:
                 link = link.get('href')
                 fill_link = domain + link
                 print(f"fill_link {fill_link}")
+                # # fill_link = "https://miss-minceur.com/collections/gaine-amincissante/products/string-amincissant"
+                # fill_link = "https://miss-minceur.com/collections/maillot-de-bain-menstruel/products/bas-maillot-de-bain-menstruel"
+                # print(fill_link)
+                try:
+                    self.request_link_by_link(fill_link,proxy,s)
+                except Exception as e:
+                    print(e)
 
-                self.request_link_by_link(fill_link,proxy,s)
 
                 print("++++++++++++")
                 print(f'INDEX {index}')
@@ -509,12 +560,12 @@ class ShopifyScrapper:
                       self.bullet_points_arr,self.h2_html_arr,self.product_id_arr,self.tags_arr,
                       self.vendor_arr,self.type_arr)
                 index += 1
-            #     if index == 5:
+            #     if index == 2:
             #         break
             #
             # #     if index == 84:
             # #         break
-            # if index == 5:
+            # if index == 2:
             #     break
         self.save_to_xlsx(self.id_by_id_arr, self.product_name_arr, self.price_arr, self.full_link_arr,
                           self.data_value_list_arr, self.variants_arr, self.related_collections_handle_arr,
@@ -531,8 +582,8 @@ class ShopifyScrapper:
         all_categpries = []
         response = requests.get(url)
         soup = bs(response.text, 'html.parser')
-        # for link in soup.find('div', class_='main-nav__wrapper').find_all('a'):
-        for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
+        for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
+        # for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
             menu_link = link.get('href')
             if menu_link.startswith('/collections'):
                 all_categpries.append(menu_link)
@@ -550,7 +601,7 @@ class ShopifyScrapper:
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.domain = 'https://univers-chinois.com' #"https://miss-minceur.com"
+    shopify_scrapper.domain = "https://miss-minceur.com"
     shopify_scrapper.create_xls_file()
     all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
