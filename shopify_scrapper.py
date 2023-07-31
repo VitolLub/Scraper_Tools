@@ -582,8 +582,8 @@ class ShopifyScrapper:
         all_categpries = []
         response = requests.get(url)
         soup = bs(response.text, 'html.parser')
-        for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
-        # for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
+        # for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
+        for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
             menu_link = link.get('href')
             if menu_link.startswith('/collections'):
                 all_categpries.append(menu_link)
@@ -601,7 +601,7 @@ class ShopifyScrapper:
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.domain = "https://miss-minceur.com"
+    shopify_scrapper.domain = "https://univers-chinois.com"
     shopify_scrapper.create_xls_file()
     all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
