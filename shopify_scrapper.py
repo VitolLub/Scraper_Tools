@@ -52,8 +52,10 @@ class ShopifyScrapper:
         self.price_min_arr = []
         self.price_max_arr = []
 
-    def cut_full_description(self,soup):
-        # print("cut_full_description2")
+    def cut_full_description(self,soup,full_description):
+        fill_description_primary = ''
+        bullet_points_arr = []
+        related_col_arr = []
         h2_html_origin = ''
         full_description_html = soup.find('div', class_='description')
         try:
@@ -73,6 +75,10 @@ class ShopifyScrapper:
         if self.domain == 'https://miss-minceur.com':
             # print("cut_full_description4")
             full_description_html = soup.find('div', class_='description bottom')
+
+            # remove all style tags
+
+
 
             # remove h2
             h2_html = full_description_html.find_all('h2')
@@ -124,9 +130,11 @@ class ShopifyScrapper:
         elif self.domain == 'https://univers-chinois.com':
             related_col_arr = []
             fill_description_primary = ''
-            full_description_html = soup.find('div', class_='description')
+            full_description_html = ''
+            ss = bs(full_description, 'html.parser')
+
             # find all p tags
-            p_tags = full_description_html.find_all('p')
+            p_tags = ss.find_all('p')
             index = 0
             for p_tag in p_tags:
                 # if p tag has parent div
@@ -146,22 +154,23 @@ class ShopifyScrapper:
 
         return fill_description_primary,bullet_points_arr,related_col_arr
 
-    def request_link_by_link(self,link,proxy_index,s):
+    def request_link_by_link(self,link_by_item,proxy_index,s):
         print("request_link_by_link")
          # make request
-        response = self.make_request(link, proxy_index, s)
+        response_item = self.make_request(link_by_item, proxy_index, s)
 
         # converrt into soup html
-        soup = bs(response.text, 'html.parser')
+        soup_item = bs(response_item.text, 'html.parser')
 
-        product_data = soup.find('div', class_='product_form')
+        product_data = soup_item.find('div', class_='product_form')
 
         # get attributes data-product
         product_data = product_data['data-product']
 
         images_arr = []
         product_data = json.loads(product_data)
-        # print(product_data)
+
+
         produc_id = product_data['id']
         product_title = product_data['title']
         product_handle = product_data['handle']
@@ -176,20 +185,23 @@ class ShopifyScrapper:
         bullet_points_arr = []
         related_col_arr = []
 
-        print("cut_full_description")
-        full_description_html_primary, bullet_points_arr, related_col_arr = self.cut_full_description(soup)
-
-
         full_description = product_data['description']
 
         all_desc = bs(full_description, 'html.parser')
+
+        print("cut_full_description")
+        full_description_html_primary, bullet_points_arr, related_col_arr = self.cut_full_description(soup_item,full_description)
+
         index = 0
         for h2 in all_desc.find_all('h2'):
             if index == 0:
+                # remove all css style
                 h2_html_origin = str(h2)
             h2.decompose()
             index += 1
             break
+
+
 
         # full_description_html_primary = str(all_desc)
         # print(full_description_html_primary)
@@ -197,11 +209,11 @@ class ShopifyScrapper:
         full_description = bs(full_description, 'html.parser').text
 
         # get title from head
-        ceo_title = soup.find('title').text
+        ceo_title = soup_item.find('title').text
         ceo_title = ceo_title.strip()
-        ceo_description = soup.find('meta', {'name': 'description'})['content']
+        ceo_description = soup_item.find('meta', {'name': 'description'})['content']
 
-        images = soup.find('div', class_='product_gallery_nav').find_all('img')
+        images = soup_item.find('div', class_='product_gallery_nav').find_all('img')
         if len(images) > 0:
             for image in images:
                 if image['src'].find('_300x.') > -1:
@@ -210,7 +222,7 @@ class ShopifyScrapper:
                 else:
                     images_arr.append(self.https + image['src'])
         else:
-            images = soup.find('div', class_='image__container').find_all('img')
+            images = soup_item.find('div', class_='image__container').find_all('img')
             for image in images:
                 if image['data-src'].find('_300x.') > -1:
                     # replace all _300x. to _800x.
@@ -218,9 +230,9 @@ class ShopifyScrapper:
                 else:
                     images_arr.append(self.https + image['data-src'])
 
-        title_html = soup.find('h1', class_="product_name")
+        title_html = soup_item.find('h1', class_="product_name")
 
-        for div in soup.find_all('div', class_='swatch_options'):
+        for div in soup_item.find_all('div', class_='swatch_options'):
             for variant in div.find_all('div', class_='option_title'):
                 # if div has text, append to handle_arr
                 if len(div.text) > 0:
@@ -228,7 +240,7 @@ class ShopifyScrapper:
         data_value_list = []
         # if div has data-value, append to data_value_list
 
-        for div in soup.find_all('div', {'data-value': True}):
+        for div in soup_item.find_all('div', {'data-value': True}):
             data_value_list.append(div['data-value'])
 
 
@@ -249,7 +261,7 @@ class ShopifyScrapper:
                 self.price_arr.append(self.cut_compare_price(product_data['price']))
                 self.price_min_arr.append(self.cut_compare_price(product_data['price_min']))
                 self.price_max_arr.append(self.cut_compare_price(product_data['price_max']))
-                self.full_link_arr.append(link)
+                self.full_link_arr.append(link_by_item)
                 self.data_value_list_arr.append(data_value_list)
                 self.variants_arr.append(','.join(variants_arr))
                 # title section
@@ -262,7 +274,7 @@ class ShopifyScrapper:
                 try:
                     secure_url = 'https:' + str(product['featured_image']['src'])
                 except:
-                    secure_url = 'none'
+                    secure_url = ''
 
                 variants = []
                 if product['option1'] == None:
@@ -382,6 +394,8 @@ class ShopifyScrapper:
                 bullet_points_variant3 = ''
 
             try:
+                # remove all style attribute
+                total_description_html = ''
                 total_description_html = str(h2_html_arr[0]) + str(full_description_html_arr[0]) + str(bullet_points_variant1) + str(bullet_points_variant2) + str(bullet_points_variant3)
 
             except:
@@ -538,7 +552,7 @@ class ShopifyScrapper:
                 fill_link = domain + link
                 print(f"fill_link {fill_link}")
                 # # fill_link = "https://miss-minceur.com/collections/gaine-amincissante/products/string-amincissant"
-                # fill_link = "https://miss-minceur.com/collections/maillot-de-bain-menstruel/products/bas-maillot-de-bain-menstruel"
+                # fill_link = "https://univers-chinois.com/collections/chemisier-chinois/products/chemisier-chinois-col-mao-femme"
                 # print(fill_link)
                 try:
                     self.request_link_by_link(fill_link,proxy,s)
