@@ -92,7 +92,13 @@ class ShopifyScrapper:
             full_description_html = soup.find('div', class_='description bottom')
 
             # remove all style tags
-
+            full_style_tags = full_description_html.find_all(style=True)
+            for style_tag2 in full_style_tags:
+                # remove style attr
+                del style_tag2['style']
+                del style_tag2['data-mce-style']
+                del style_tag2['data-mce-fragment']
+            full_description_html = full_description_html
 
 
             # remove h2
@@ -643,8 +649,8 @@ class ShopifyScrapper:
         all_categpries = []
         response = requests.get(url)
         soup = bs(response.text, 'html.parser')
-        # for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
-        for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
+        for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
+        # for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
             menu_link = link.get('href')
             if menu_link.startswith('/collections'):
                 all_categpries.append(menu_link)
@@ -662,7 +668,7 @@ class ShopifyScrapper:
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.domain = "https://univers-chinois.com"
+    shopify_scrapper.domain = "https://miss-minceur.com"
     shopify_scrapper.create_xls_file()
     all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
