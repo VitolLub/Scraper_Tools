@@ -69,7 +69,7 @@ class Rieltors:
                 sheet.cell(row=next_row, column=4, value=str(self.state_array[i]))
                 sheet.cell(row=next_row, column=5, value=str(self.city_array[i]))
                 sheet.cell(row=next_row, column=6, value=str(self.zip_array[i]))
-                sheet.cell(row=next_row, column=6, value=str(self.company_array[i]))
+                sheet.cell(row=next_row, column=7, value=str(self.company_array[i]))
             except Exception as e:
                 print(e)
             next_row += 1
@@ -197,7 +197,7 @@ class Rieltors:
             property_rieltor_name = property_p.inner_text()
             # print(property_rieltor_name)
             # if Keller, EXP or Century 21 in property name
-            if "Keller" in property_rieltor_name or "EXP" in property_rieltor_name or "Century 21" in property_rieltor_name:
+            if "KELLER" in property_rieltor_name or "CENTURY" in property_rieltor_name or "Keller" in property_rieltor_name or "EXP" in property_rieltor_name or "Century 21" in property_rieltor_name:
                 # print(property_rieltor_name)
                 # get parent element
                 parent = property_p.query_selector("xpath=..")
@@ -257,7 +257,7 @@ class Rieltors:
 
                 index_step += 1
                 print(f"index_step {index_step}")
-                if index_step == 50:
+                if index_step == 10:
                     break
             index = 0
             print(len(self.link_array))
@@ -271,60 +271,60 @@ class Rieltors:
                 lisk_res = requests.get(link)
                 print(lisk_res.status_code)
                 # print(lisk_res.text)
+                if lisk_res.status_code == 200:
+                    bs_result = bs(lisk_res.text, 'html.parser')
 
-                bs_result = bs(lisk_res.text, 'html.parser')
+                    # find script by id '__NEXT_DATA__'
+                    script = bs_result.find('script', id='__NEXT_DATA__').text
 
-                # find script by id '__NEXT_DATA__'
-                script = bs_result.find('script', id='__NEXT_DATA__').text
+                    json_res = json.loads(script)
+                    # print(json_res['props']['pageProps']['propertyData']['listingAgentData']['courtesyOfBrokerage'])
+                    # quit()
 
-                json_res = json.loads(script)
-                # print(json_res['props']['pageProps']['propertyData']['listingAgentData']['courtesyOfBrokerage'])
-                # quit()
+                    json_data = json_res['props']['pageProps']['propertyData']['listingAgentData']
+                    json_state = json_res['props']['pageProps']['propertyData']['locator']['address']['state']
+                    json_city = json_res['props']['pageProps']['propertyData']['locator']['address']['city']
+                    json_zip = json_res['props']['pageProps']['propertyData']['locator']['address']['zipcode']
+                    self.state_array.append(json_state)
+                    self.city_array.append(json_city)
+                    self.zip_array.append(json_zip)
+                    self.company_array.append(json_res['props']['pageProps']['propertyData']['listingAgentData']['courtesyOfBrokerage'])
 
-                json_data = json_res['props']['pageProps']['propertyData']['listingAgentData']
-                json_state = json_res['props']['pageProps']['propertyData']['locator']['address']['state']
-                json_city = json_res['props']['pageProps']['propertyData']['locator']['address']['city']
-                json_zip = json_res['props']['pageProps']['propertyData']['locator']['address']['zipcode']
-                self.state_array.append(json_state)
-                self.city_array.append(json_city)
-                self.zip_array.append(json_zip)
-                self.company_array.append(json_res['props']['pageProps']['propertyData']['listingAgentData']['courtesyOfBrokerage'])
+                    print(json_data)
+                    try:
+                        full_name = json_data['fullName']
+                        if full_name == None:
+                            full_name = json_data['brokerLicense']
+                    except:
+                        full_name = ''
+                    print(full_name)
+                    # if full_name == None:
+                    #     print(json_res)
+                    phones_arr = []
 
-                print(json_data)
-                try:
-                    full_name = json_data['fullName']
-                    if full_name == None:
-                        full_name = json_data['brokerLicense']
-                except:
-                    full_name = ''
-                print(full_name)
-                # if full_name == None:
-                #     print(json_res)
-                phones_arr = []
-
-                type = ''
-                phone = ''
-                try:
-                    for phones in json_data['phones']:
-                        phoneNumber = phones['phoneNumber']
-                        phoneNumberType = phones['phoneNumberType']
-                        phones_arr.append(str(phoneNumberType)+" "+str(phoneNumber))
-                    print(phones_arr)
-                except:
-                    phones_arr.append('')
-                email = ''
-                try:
-                    for cont_E in json_data['contactMethods']:
-                        if "@" in cont_E['value']:
-                            email = cont_E['value']
-                            break
-                except:
+                    type = ''
+                    phone = ''
+                    try:
+                        for phones in json_data['phones']:
+                            phoneNumber = phones['phoneNumber']
+                            phoneNumberType = phones['phoneNumberType']
+                            phones_arr.append(str(phoneNumberType)+" "+str(phoneNumber))
+                        print(phones_arr)
+                    except:
+                        phones_arr.append('')
                     email = ''
-                print(email)
+                    try:
+                        for cont_E in json_data['contactMethods']:
+                            if "@" in cont_E['value']:
+                                email = cont_E['value']
+                                break
+                    except:
+                        email = ''
+                    print(email)
 
-                self.email_array.append(email)
-                self.phone_array.append(" ".join(phones_arr))
-                self.name_array.append(full_name)
+                    self.email_array.append(email)
+                    self.phone_array.append(" ".join(phones_arr))
+                    self.name_array.append(full_name)
             self.save_data()
 
             # for link in self.link_array:
