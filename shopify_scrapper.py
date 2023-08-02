@@ -61,6 +61,17 @@ class ShopifyScrapper:
         bullet_points_arr = []
         related_col_arr = []
         h2_html_origin = ''
+
+        # remove all  attributes data-mce-fragment
+        style_tags = soup.find_all(style=True)
+        for style_tag in style_tags:
+            # remove style attr
+            del style_tag['style']
+            del style_tag['data-mce-style']
+            del style_tag['data-mce-fragment']
+        soup = soup
+
+
         full_description_html = soup.find('div', class_='description')
         try:
             bullet_points_arr = []
@@ -137,6 +148,14 @@ class ShopifyScrapper:
             full_description_html = ''
             ss = bs(full_description, 'html.parser')
 
+            full_style_tags = ss.find_all(style=True)
+            for style_tag2 in full_style_tags:
+                # remove style attr
+                del style_tag2['style']
+                del style_tag2['data-mce-style']
+                del style_tag2['data-mce-fragment']
+            ss = ss
+
             # find all p tags
             p_tags = ss.find_all('p')
             index = 0
@@ -162,12 +181,15 @@ class ShopifyScrapper:
 
         # remove all style tags
         soup = bs(full_description_html_primary, 'html.parser')
-        # find all style attr
-        style_tags = soup.find_all(style=True)
+        # find all tags
+        style_tags = soup.find_all()
         for style_tag in style_tags:
             # remove style attr
             del style_tag['style']
             del style_tag['data-mce-style']
+            del style_tag['data-mce-fragment']
+
+
 
         full_description_html_primary = str(soup)
         return full_description_html_primary
@@ -325,7 +347,7 @@ class ShopifyScrapper:
                 self.images_arr_variant.append(images_arr[0])
                 self.images_arr.append(','.join(images_arr))
                 self.variants_arr_primary.append(variants)
-                self.h2_html_arr.append(str(h2_html_origin))
+                self.h2_html_arr.append(str(self.remove_all_css_style(h2_html_origin)))
                 self.product_id_arr.append(id_by_id)
                 self.tags_arr.append(','.join(tags))
                 self.vendor_arr.append(vendor)
@@ -621,8 +643,8 @@ class ShopifyScrapper:
         all_categpries = []
         response = requests.get(url)
         soup = bs(response.text, 'html.parser')
-        for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
-        # for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
+        # for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
+        for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
             menu_link = link.get('href')
             if menu_link.startswith('/collections'):
                 all_categpries.append(menu_link)
@@ -640,7 +662,7 @@ class ShopifyScrapper:
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.domain = "https://miss-minceur.com"
+    shopify_scrapper.domain = "https://univers-chinois.com"
     shopify_scrapper.create_xls_file()
     all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
