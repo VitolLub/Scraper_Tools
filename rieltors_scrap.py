@@ -257,8 +257,8 @@ class Rieltors:
 
                 index_step += 1
                 print(f"index_step {index_step}")
-                if index_step == 10:
-                    break
+                # if index_step == 10:
+                #     break
             index = 0
             print(len(self.link_array))
             print(len(self.addreses_what_need_check))
@@ -429,3 +429,4 @@ if __name__ == "__main__":
 
 
     # rieltors.read_csv_file()
+
