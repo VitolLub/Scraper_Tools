@@ -69,6 +69,7 @@ class ShopifyScrapper:
             del style_tag['style']
             del style_tag['data-mce-style']
             del style_tag['data-mce-fragment']
+            del style_tag['class']
         soup = soup
 
 
@@ -98,6 +99,7 @@ class ShopifyScrapper:
                 del style_tag2['style']
                 del style_tag2['data-mce-style']
                 del style_tag2['data-mce-fragment']
+                del style_tag2['class']
             full_description_html = full_description_html
 
 
@@ -120,6 +122,8 @@ class ShopifyScrapper:
                 full_description_html_res = str(full_description_html).split('▶')
             if str(full_description_html).find('👗') != -1:
                 full_description_html_res = str(full_description_html).split('👗')
+            if str(full_description_html).find('Guide des tailles') != -1:
+                full_description_html_res = str(full_description_html).split('Guide des tailles')
 
             try:
                 fill_description_primary = full_description_html_res[0]
@@ -160,6 +164,7 @@ class ShopifyScrapper:
                 del style_tag2['style']
                 del style_tag2['data-mce-style']
                 del style_tag2['data-mce-fragment']
+                del style_tag2['class']
             ss = ss
 
             # find all p tags
@@ -194,6 +199,7 @@ class ShopifyScrapper:
             del style_tag['style']
             del style_tag['data-mce-style']
             del style_tag['data-mce-fragment']
+            del style_tag['class']
 
 
 
