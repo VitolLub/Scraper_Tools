@@ -70,6 +70,10 @@ class ShopifyScrapper:
             del style_tag['data-mce-style']
             del style_tag['data-mce-fragment']
             del style_tag['class']
+            del style_tag['data-mce-fragment']
+            del style_tag['data-mce-selected']
+            del style_tag['width']
+            del style_tag['border']
         soup = soup
 
 
@@ -100,6 +104,10 @@ class ShopifyScrapper:
                 del style_tag2['data-mce-style']
                 del style_tag2['data-mce-fragment']
                 del style_tag2['class']
+                del style_tag2['data-mce-fragment']
+                del style_tag2['data-mce-selected']
+                del style_tag2['width']
+                del style_tag2['border']
             full_description_html = full_description_html
 
 
@@ -118,12 +126,69 @@ class ShopifyScrapper:
             full_description_html_res = []
             if str(full_description_html).find('✂') != -1:
                 full_description_html_res = str(full_description_html).split('✂')
-            if str(full_description_html).find('▶') != -1:
+            elif str(full_description_html).find('▶') != -1:
                 full_description_html_res = str(full_description_html).split('▶')
-            if str(full_description_html).find('👗') != -1:
+            elif str(full_description_html).find('👗') != -1:
                 full_description_html_res = str(full_description_html).split('👗')
-            if str(full_description_html).find('Guide des tailles') != -1:
-                full_description_html_res = str(full_description_html).split('Guide des tailles')
+            elif str(full_description_html).find('<table') != -1 and str(full_description_html).find('<ul') != -1:
+                # cut data inside table
+                tb_data = bs(full_description_html, 'html.parser')
+                tbale_data = tb_data.find_all('table')
+                table_data = ''
+                for table in tbale_data:
+                    table_data = str(table)
+                    print(table_data)
+                    table.decompose()
+
+
+                pall_primary = ''
+                pall_data = tb_data.find_all('p')
+                for p in pall_data:
+                    pall_primary += str(p)
+                full_description_html_res.append(str(pall_primary))
+
+                ulale_data = tb_data.find_all('ul')
+                tul_data = ''
+                for uls in ulale_data:
+                    tul_data = uls
+                full_description_html_res.append(str(tul_data))
+                full_description_html_res.append(str(table_data))
+
+            elif str(full_description_html).find('<ul') != -1:
+                # cut data inside table
+                # get data inside table
+                ul_data = bs(full_description_html, 'html.parser')
+                pall_primary = ''
+                pall_data = ul_data.find_all('p')
+                for p in pall_data:
+                    pall_primary += str(p)
+                full_description_html_res.append(str(pall_primary))
+
+                ulale_data = ul_data.find_all('ul')
+                tul_data = ''
+                for uls in ulale_data:
+                    tul_data = uls
+                full_description_html_res.append(str(tul_data))
+
+            elif str(full_description_html).find('<table') != -1:
+                # cut data inside table
+                # get data inside table
+                tb_data = bs(full_description_html, 'html.parser')
+
+                tbale_data = tb_data.find_all('table')
+                table_data = ''
+                for table in tbale_data:
+                    table_data = table
+                    table.decompose()
+
+                pall_primary = ''
+                pall_data = tb_data.find_all('p')
+                for p in pall_data:
+                    pall_primary+=str(p)
+                full_description_html_res.append(str(pall_primary))
+                full_description_html_res.append(str(table_data))
+
+
 
             try:
                 fill_description_primary = full_description_html_res[0]
@@ -161,10 +226,11 @@ class ShopifyScrapper:
             full_style_tags = ss.find_all(style=True)
             for style_tag2 in full_style_tags:
                 # remove style attr
-                del style_tag2['style']
-                del style_tag2['data-mce-style']
-                del style_tag2['data-mce-fragment']
                 del style_tag2['class']
+                del style_tag2['data-mce-fragment']
+                del style_tag2['data-mce-selected']
+                del style_tag2['width']
+                del style_tag2['border']
             ss = ss
 
             # find all p tags
@@ -196,10 +262,11 @@ class ShopifyScrapper:
         style_tags = soup.find_all()
         for style_tag in style_tags:
             # remove style attr
-            del style_tag['style']
-            del style_tag['data-mce-style']
-            del style_tag['data-mce-fragment']
             del style_tag['class']
+            del style_tag['data-mce-fragment']
+            del style_tag['data-mce-selected']
+            del style_tag['width']
+            del style_tag['border']
 
 
 
@@ -609,7 +676,7 @@ class ShopifyScrapper:
                 fill_link = domain + link
                 print(f"fill_link {fill_link}")
                 # # fill_link = "https://miss-minceur.com/collections/gaine-amincissante/products/string-amincissant"
-                # fill_link = "https://univers-chinois.com/collections/chemisier-chinois/products/chemisier-chinois-col-mao-femme"
+                # fill_link = "https://miss-minceur.com/collections/maillot-de-bain-gainant/products/maillot-de-bain-amincissant-femme"
                 # print(fill_link)
                 try:
                     self.request_link_by_link(fill_link,proxy,s)
