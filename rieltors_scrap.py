@@ -36,11 +36,11 @@ class Rieltors:
         self.addreses_what_need_check = []
         self.spend_addreses = []
         self.company_array = []
+        self.index_for_save = 0
 
     def make_request(self):
         pass
-
-    def save_data(self):
+    def create_file(self):
         wb = Workbook()
         ws = wb.active
         ws['A1'] = "Name"
@@ -52,6 +52,8 @@ class Rieltors:
         ws['G1'] = "Company"
 
         wb.save("rieltors.xlsx")
+    def save_data(self):
+
         xlsx_file_path = "rieltors.xlsx"
         wb = load_workbook(xlsx_file_path)
 
@@ -78,11 +80,14 @@ class Rieltors:
         # Optional: Close the workbook
         wb.close()
 
-    def get_data(self):
-        pass
+        # clear all variables
+        for name, value in vars(self).items():
+            # clear all variables
+            if type(value) is list and name != 'cities_array':
+                value.clear()
+        print("Data saved")
 
-    def parse_data(self):
-        pass
+
 
     def get_summary_field(self,page):
         return page.inner_text('div.SearchList__summary', timeout=500000)
@@ -237,17 +242,82 @@ class Rieltors:
             click_index += 1
             self.search_new_links(page,click_index)
 
+    def save_step(self):
+        for link_param in self.link_array:
+            link = "https://www.kw.com/" + str(link_param)
+            print(link)
+            # meake request to link
+            lisk_res = requests.get(link)
+            print(lisk_res.status_code)
+            # print(lisk_res.text)
+            if lisk_res.status_code == 200:
+                bs_result = bs(lisk_res.text, 'html.parser')
 
+                # find script by id '__NEXT_DATA__'
+                script = bs_result.find('script', id='__NEXT_DATA__').text
+
+                json_res = json.loads(script)
+                # print(json_res['props']['pageProps']['propertyData']['listingAgentData']['courtesyOfBrokerage'])
+                # quit()
+
+                json_data = json_res['props']['pageProps']['propertyData']['listingAgentData']
+                json_state = json_res['props']['pageProps']['propertyData']['locator']['address']['state']
+                json_city = json_res['props']['pageProps']['propertyData']['locator']['address']['city']
+                json_zip = json_res['props']['pageProps']['propertyData']['locator']['address']['zipcode']
+                self.state_array.append(json_state)
+                self.city_array.append(json_city)
+                self.zip_array.append(json_zip)
+                self.company_array.append(
+                    json_res['props']['pageProps']['propertyData']['listingAgentData']['courtesyOfBrokerage'])
+
+                print(json_data)
+                try:
+                    full_name = json_data['fullName']
+                    if full_name == None:
+                        full_name = json_data['brokerLicense']
+                except:
+                    full_name = ''
+                print(full_name)
+                # if full_name == None:
+                #     print(json_res)
+                phones_arr = []
+
+                type = ''
+                phone = ''
+                try:
+                    for phones in json_data['phones']:
+                        phoneNumber = phones['phoneNumber']
+                        phoneNumberType = phones['phoneNumberType']
+                        phones_arr.append(str(phoneNumberType) + " " + str(phoneNumber))
+                    print(phones_arr)
+                except:
+                    phones_arr.append('')
+                email = ''
+                try:
+                    for cont_E in json_data['contactMethods']:
+                        if "@" in cont_E['value']:
+                            email = cont_E['value']
+
+                except:
+                    email = ''
+                print(email)
+
+                self.email_array.append(email)
+                self.phone_array.append(" ".join(phones_arr))
+                self.name_array.append(full_name)
+        self.save_data()
 
     def goto(self):
         # start selenium browser
+        print(f"self.cities_array {len(self.cities_array)}")
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=False)
             page = browser.new_page()
+
             # wait until page is loaded
             index_step = 0
+            print(f"self.cities_array {len(self.cities_array)}")
             for go_to_link in self.cities_array:
-                # go_to_link[2] = "33145"
                 zip_code = go_to_link[2]
                 go_to_link_str = " ".join(go_to_link)
                 # print(type(go_to_link_str))
@@ -256,76 +326,24 @@ class Rieltors:
                 self.page_per_page(page,go_to_link_str,zip_code)
 
                 index_step += 1
+                self.index_for_save += 1
                 print(f"index_step {index_step}")
-                # if index_step == 10:
+                print(f"self.link_array {len(self.link_array)}")
+
+                # save
+                if len(self.link_array) > 200:
+                    print("len(self.link_array) % 10")
+                    print(len(self.link_array))
+                    self.save_step()
+
+
+                # if index_step == 4:
                 #     break
-            index = 0
-            print(len(self.link_array))
-            print(len(self.addreses_what_need_check))
 
-            # self.link_array.append('property/LST-7090849508152778752-4')
-            for link_param in self.link_array:
-                link = "https://www.kw.com/"+str(link_param)
-                print(link)
-                # meake request to link
-                lisk_res = requests.get(link)
-                print(lisk_res.status_code)
-                # print(lisk_res.text)
-                if lisk_res.status_code == 200:
-                    bs_result = bs(lisk_res.text, 'html.parser')
+            # print(len(self.addreses_what_need_check))
 
-                    # find script by id '__NEXT_DATA__'
-                    script = bs_result.find('script', id='__NEXT_DATA__').text
 
-                    json_res = json.loads(script)
-                    # print(json_res['props']['pageProps']['propertyData']['listingAgentData']['courtesyOfBrokerage'])
-                    # quit()
 
-                    json_data = json_res['props']['pageProps']['propertyData']['listingAgentData']
-                    json_state = json_res['props']['pageProps']['propertyData']['locator']['address']['state']
-                    json_city = json_res['props']['pageProps']['propertyData']['locator']['address']['city']
-                    json_zip = json_res['props']['pageProps']['propertyData']['locator']['address']['zipcode']
-                    self.state_array.append(json_state)
-                    self.city_array.append(json_city)
-                    self.zip_array.append(json_zip)
-                    self.company_array.append(json_res['props']['pageProps']['propertyData']['listingAgentData']['courtesyOfBrokerage'])
-
-                    print(json_data)
-                    try:
-                        full_name = json_data['fullName']
-                        if full_name == None:
-                            full_name = json_data['brokerLicense']
-                    except:
-                        full_name = ''
-                    print(full_name)
-                    # if full_name == None:
-                    #     print(json_res)
-                    phones_arr = []
-
-                    type = ''
-                    phone = ''
-                    try:
-                        for phones in json_data['phones']:
-                            phoneNumber = phones['phoneNumber']
-                            phoneNumberType = phones['phoneNumberType']
-                            phones_arr.append(str(phoneNumberType)+" "+str(phoneNumber))
-                        print(phones_arr)
-                    except:
-                        phones_arr.append('')
-                    email = ''
-                    try:
-                        for cont_E in json_data['contactMethods']:
-                            if "@" in cont_E['value']:
-                                email = cont_E['value']
-                                break
-                    except:
-                        email = ''
-                    print(email)
-
-                    self.email_array.append(email)
-                    self.phone_array.append(" ".join(phones_arr))
-                    self.name_array.append(full_name)
-            self.save_data()
 
             # for link in self.link_array:
             #     # go ti property link and wait until page is loaded
@@ -422,6 +440,7 @@ class Rieltors:
 if __name__ == "__main__":
     rieltors = Rieltors()
     rieltors.read_csv_file()
+    rieltors.create_file()
     rieltors.domain = "https://www.kw.com/search/location/ChIJY10Hv_i02YgRjdzvoWOVM6w-0.7420868142967443,Florida%2C%20Miami%2C%2033109,Miami%20Beach%2C%20FL%2033109%2C%20USA?fallBackCityAndState=Miami%20Beach%2C%20FL&fallBackPosition=25.7560139%2C%20-80.1344842&fallBackStreet=&isFallback=true&viewport=25.872362435965854%2C-80.1049454695791%2C25.826943802010476%2C-80.15103654929102&zoom=14"
     rieltors.goto()
     # rieltors.generate_link()
