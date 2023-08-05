@@ -110,15 +110,15 @@ class Rieltors:
             property_rieltor_name = property_p.inner_text()
             # print(property_rieltor_name)
             # if Keller, EXP or Century 21 in property name
-            if "Keller" in property_rieltor_name or "EXP" in property_rieltor_name or "Century 21" in property_rieltor_name:
-                # print(property_rieltor_name)
-                # get parent element
-                parent = property_p.query_selector("xpath=..")
-                # get property link
-                link = parent.get_attribute('href')
-                # print(link)
-                if link not in self.link_array:
-                    self.link_array.append(link)
+            # if "Keller" in property_rieltor_name or "EXP" in property_rieltor_name or "Century 21" in property_rieltor_name:
+            # print(property_rieltor_name)
+            # get parent element
+            parent = property_p.query_selector("xpath=..")
+            # get property link
+            link = parent.get_attribute('href')
+            # print(link)
+            if link not in self.link_array:
+                self.link_array.append(link)
 
         print(f"self.link_array {len(self.link_array)}")
         # get div class SearchList__summary text
@@ -148,8 +148,10 @@ class Rieltors:
                 self.addreses_what_need_check.remove(addrs)
                 # add to self.spend_addreses
                 self.spend_addreses.append(addrs)
-
-                self.page_per_page(page, str(addrs), zip_code)
+                try:
+                    self.page_per_page(page, str(addrs), zip_code)
+                except Exception as e:
+                    print(e)
 
 
 
@@ -202,15 +204,15 @@ class Rieltors:
             property_rieltor_name = property_p.inner_text()
             # print(property_rieltor_name)
             # if Keller, EXP or Century 21 in property name
-            if "KELLER" in property_rieltor_name or "CENTURY" in property_rieltor_name or "Keller" in property_rieltor_name or "EXP" in property_rieltor_name or "Century 21" in property_rieltor_name:
-                # print(property_rieltor_name)
-                # get parent element
-                parent = property_p.query_selector("xpath=..")
-                # get property link
-                link = parent.get_attribute('href')
-                # print(link)
-                if link not in self.link_array:
-                    self.link_array.append(link)
+            # if "KELLER" in property_rieltor_name or "CENTURY" in property_rieltor_name or "Keller" in property_rieltor_name or "EXP" in property_rieltor_name or "Century 21" in property_rieltor_name:
+            # print(property_rieltor_name)
+            # get parent element
+            parent = property_p.query_selector("xpath=..")
+            # get property link
+            link = parent.get_attribute('href')
+            # print(link)
+            if link not in self.link_array:
+                self.link_array.append(link)
 
         print(len(self.link_array))
 
@@ -322,8 +324,10 @@ class Rieltors:
                 go_to_link_str = " ".join(go_to_link)
                 # print(type(go_to_link_str))
                 print(go_to_link_str)
-
-                self.page_per_page(page,go_to_link_str,zip_code)
+                try:
+                    self.page_per_page(page,go_to_link_str,zip_code)
+                except:
+                    pass
 
                 index_step += 1
                 self.index_for_save += 1
@@ -331,7 +335,7 @@ class Rieltors:
                 print(f"self.link_array {len(self.link_array)}")
 
                 # save
-                if len(self.link_array) > 200:
+                if len(self.link_array) > 1000:
                     print("len(self.link_array) % 10")
                     print(len(self.link_array))
                     self.save_step()
@@ -344,78 +348,6 @@ class Rieltors:
 
 
 
-
-            # for link in self.link_array:
-            #     # go ti property link and wait until page is loaded
-            #
-            #     page.goto(str("https://www.kw.com")+str(link), timeout=100000)
-            #
-            #
-            #     # check if page has text 'Log In'
-            #     if page.title():
-            #         # dont wait for page to load
-            #         # get property details
-            #         try:
-            #             address = page.inner_text('span.PropertyGeneralInfo__addressStreet', timeout=5000)
-            #         except:
-            #             address = ''
-            #         try:
-            #             city = page.inner_text('span.PropertyGeneralInfo__addressCity', timeout=5000)
-            #         except:
-            #             city = ''
-            #         license_r = ''
-            #         phone = ''
-            #         email = ''
-            #         rieltor_name = ''
-            #         listed_by = ''
-            #         try:
-            #             listed_by = page.inner_text('span.PropertyGeneralInfo__brokerageInfo', timeout=5000)
-            #             listed_by = listed_by.replace('Listing Courtesy Of:','')
-            #             # split string by ,
-            #             listed_by = listed_by.split(',')[0]
-            #             rieltor_name = listed_by[1]
-            #         except:
-            #             listed_by = ''
-            #
-            #         print(address,city,listed_by,phone,email,license_r) #
-            #         # find div class name 'AgentDetails__info--details', if exist then get data
-            #         try:
-            #             if page.inner_text('div.AgentDetails__info--details', timeout=5000):
-            #                 try:
-            #                     phone  = page.inner_text('div.AgentDetails__contact--phones', timeout=1000)
-            #                     print(phone)
-            #                 except:
-            #                     phone = ''
-            #                 try:
-            #                     email = page.inner_text('a.AgentDetails__contact--email', timeout=1000)
-            #                     print(email)
-            #                 except:
-            #                     email = ''
-            #                 try:
-            #                     license_r = page.inner_text('span.AgentDetails__info--license', timeout=1000)
-            #                     print(license_r)
-            #                 except:
-            #                     license_r = ''
-            #         except:
-            #             print('Bad')
-            #         print('-------------------')
-            #         print(f"index: {len(self.phone)}")
-            #         self.phone.append(phone)
-            #         self.email.append(email)
-            #         self.address.append(address)
-            #         self.city.append(city)
-            #         self.license_r.append(license_r)
-            #         self.listed_by.append(listed_by)
-            #         self.rieltor_name_array.append(rieltor_name)
-            #
-            # self.save_data()
-
-
-
-
-
-            # just wait for 10 minutes before closing the browser
-            # page.wait_for_timeout(600000)
 
 
 
