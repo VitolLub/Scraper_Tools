@@ -8,6 +8,8 @@ from openpyxl.styles import PatternFill
 from pynput.keyboard import Key, Controller
 from bs4 import BeautifulSoup as bs
 import os
+import re
+
 class Start:
     def __init__(self):
         self.url = "https://hcir.web.health.state.mn.us/search.do?searchAction=searchResult"
@@ -81,14 +83,18 @@ class Start:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=False)
             page = browser.new_page()
-            page.goto(self.url, timeout=60000)
+            try:
+                page.goto(self.url, timeout=60000)
+            except:
+                self.save_data_to_xlxs()
 
             step_i = 0
             finded_id = 0
             finded_id_status = False
             for js in self.js_code:
-                if self.rosted_id[step_i] == '96102':
+                if self.rosted_id[step_i] == '83983':
                     finded_id = step_i
+                    print(f"step_i primary {step_i}")
                     finded_id_status = True
                 if finded_id_status == False:
                     self.language.append('')
@@ -106,8 +112,8 @@ class Start:
                         pass
                 step_i += 1
                 print(f"step_i: {step_i}")
-                # if step_i == 340:
-                #     break
+                if step_i == 987:
+                    break
 
     def link_by_link(self,page,js,step_i):
         if len(js) == 0:
@@ -134,7 +140,7 @@ class Start:
                     html = page.inner_html('html')
 
                     self.get_all_data_from_html(html)
-
+                    page.wait_for_timeout(9000)
                     # click Alt + Left Arrow
                     kb = Controller()
                     # press alt + left together
@@ -142,6 +148,8 @@ class Start:
                     kb.press(Key.left)  # Presses "left" key
                     kb.release(Key.alt)  # Releases "up" key
                     kb.release(Key.left)  # etc..
+
+                    page.wait_for_timeout(10000)
                 except:
                     pass
             except:
@@ -252,6 +260,48 @@ class Start:
 
 if __name__ == "__main__":
     start = Start()
-    start.goto()
-    # start.get_all_data_from_html()
-    start.save_data_to_xlxs()
+    # start.goto()
+    # # start.get_all_data_from_html()
+    # start.save_data_to_xlxs()
+
+    # openpyxl review cell in hcir_web_health_state.xlsx
+
+    wb = load_workbook("hcir_web_health_state.xlsx")
+
+   # get all F column
+    sheet = wb.active
+    for i in range(2,sheet.max_row+1):
+        # try:
+        phone_res = sheet.cell(row=i, column=6).value
+        email_data_res = sheet.cell(row=i, column=7).value
+
+
+
+        try:
+            # remove all email and E-Mail Address:
+            phone_res = phone_res.replace("E-Mail Address:", "")
+            # find email in string
+            email_res = re.findall(r'[\w\.-]+@[\w\.-]+', phone_res)
+            phone_res = phone_res.replace(email_res[0],"")
+        except:
+            pass
+
+        try:
+            email_data_res_primary = email_data_res.replace("Phone #:", "")
+            print(email_data_res_primary)
+        except:
+            pass
+
+        try:
+            sheet.cell(row=i, column=6, value=phone_res.strip())
+        except:
+            sheet.cell(row=i, column=6, value=phone_res)
+
+        try:
+            sheet.cell(row=i, column=7, value=email_data_res_primary.strip())
+        except:
+            sheet.cell(row=i, column=7, value="")
+        # save file
+        wb.save("hcir_web_health_state.xlsx")
+        # except:
+        #     pass
