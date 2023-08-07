@@ -8,6 +8,7 @@ from openpyxl.styles import PatternFill
 from bs4 import BeautifulSoup as bs
 import json
 import csv
+import psycopg2
 
 
 class Rieltors:
@@ -80,12 +81,7 @@ class Rieltors:
         # Optional: Close the workbook
         wb.close()
 
-        # clear all variables
-        for name, value in vars(self).items():
-            # clear all variables
-            if type(value) is list and name != 'cities_array':
-                value.clear()
-        print("Data saved")
+
 
 
 
@@ -210,7 +206,7 @@ class Rieltors:
             parent = property_p.query_selector("xpath=..")
             # get property link
             link = parent.get_attribute('href')
-            # print(link)
+
             if link not in self.link_array:
                 self.link_array.append(link)
 
@@ -249,7 +245,7 @@ class Rieltors:
             link = "https://www.kw.com/" + str(link_param)
             print(link)
             # meake request to link
-            lisk_res = requests.get(link)
+            lisk_res = requests.get(link,timeout=10000)
             print(lisk_res.status_code)
             # print(lisk_res.text)
             if lisk_res.status_code == 200:
@@ -266,11 +262,11 @@ class Rieltors:
                 json_state = json_res['props']['pageProps']['propertyData']['locator']['address']['state']
                 json_city = json_res['props']['pageProps']['propertyData']['locator']['address']['city']
                 json_zip = json_res['props']['pageProps']['propertyData']['locator']['address']['zipcode']
-                self.state_array.append(json_state)
-                self.city_array.append(json_city)
-                self.zip_array.append(json_zip)
-                self.company_array.append(
-                    json_res['props']['pageProps']['propertyData']['listingAgentData']['courtesyOfBrokerage'])
+                # self.state_array.append(json_state)
+                # self.city_array.append(json_city)
+                # self.zip_array.append(json_zip)
+                # self.company_array.append(
+                #     json_res['props']['pageProps']['propertyData']['listingAgentData']['courtesyOfBrokerage'])
 
                 print(json_data)
                 try:
@@ -304,10 +300,31 @@ class Rieltors:
                     email = ''
                 print(email)
 
-                self.email_array.append(email)
-                self.phone_array.append(" ".join(phones_arr))
-                self.name_array.append(full_name)
-        self.save_data()
+                # self.email_array.append(email)
+                # self.phone_array.append(" ".join(phones_arr))
+                # self.name_array.append(full_name)
+                address = ''
+                if json_city == None:
+                    json_city = ''
+                # print(email)
+                # print(" ".join(phones_arr))
+                # print(full_name)
+                # print(json_state)
+                # print(json_city)
+                # print(json_zip)
+                try:
+                    self.insert_data_on(email, " ".join(phones_arr), full_name, json_state, json_city, json_zip, address)
+                except:
+                    pass
+        self.clean_all_variables()
+
+    def clean_all_variables(self):
+        # clear all variables
+        for name, value in vars(self).items():
+            # clear all variables
+            if type(value) is list and name != 'cities_array':
+                value.clear()
+        print("Data saved")
 
     def goto(self):
         # start selenium browser
@@ -335,10 +352,13 @@ class Rieltors:
                 print(f"self.link_array {len(self.link_array)}")
 
                 # save
-                if len(self.link_array) > 1000:
+                if len(self.link_array) > 300:
                     print("len(self.link_array) % 10")
                     print(len(self.link_array))
-                    self.save_step()
+                    try:
+                        self.save_step()
+                    except Exception as e:
+                        print(e)
 
 
                 # if index_step == 4:
@@ -360,7 +380,7 @@ class Rieltors:
             # get state_name
             reader = csv.DictReader(csvfile)
             for row in reader:
-                if row['state_name'] == 'Florida':
+                if row['state_name'] == 'Florida' or row['state_name'] == 'Texas':
                     zip_arr = row['zips'].split(' ')
                     for zip in zip_arr:
                         # print(row['state_name'],row['city_ascii'],zip)
@@ -369,15 +389,54 @@ class Rieltors:
         return self.cities_array
 
 
+    def postgres_connect(self):
+        connection = None
+        try:
+            # In PostgreSQL, default username is 'postgres' and password is 'postgres'.
+            # And also there is a default database exist named as 'postgres'.
+            # Default host is 'localhost' or '127.0.0.1'
+            # And default port is '54322'.
+            postgre_user = 'postgres'
+            postgre_host = '64.225.108.120'
+            postgre_password = '486070920'
+            postgre_port = '5432'
+            connection = psycopg2.connect(
+                f"user='{postgre_user}' host='{postgre_host}' password='{postgre_password}' port='{postgre_port}'")
+
+
+            return connection
+
+        except:
+            print('Database not connected.')
+
+
+    def select_all_data_from_data_collection(self):
+        connection = self.postgres_connect()
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM data_collections_data_collections")
+        rows = cursor.fetchall()
+        return rows
+
+    def insert_data_on(self,email, phone, name, state, city, zip_code, address):
+
+        connection = self.postgres_connect()
+        cursor = connection.cursor()
+        cursor.execute("INSERT INTO data_collections_data_collections (email, phone, name, state, city, zip_code, address) VALUES (%s, %s, %s, %s, %s, %s, %s)", (email, phone, name, state, city, zip_code, address))
+        connection.commit()
+        print("Record inserted successfully into data_collections_data_collections table")
+
 if __name__ == "__main__":
     rieltors = Rieltors()
     rieltors.read_csv_file()
     rieltors.create_file()
     rieltors.domain = "https://www.kw.com/search/location/ChIJY10Hv_i02YgRjdzvoWOVM6w-0.7420868142967443,Florida%2C%20Miami%2C%2033109,Miami%20Beach%2C%20FL%2033109%2C%20USA?fallBackCityAndState=Miami%20Beach%2C%20FL&fallBackPosition=25.7560139%2C%20-80.1344842&fallBackStreet=&isFallback=true&viewport=25.872362435965854%2C-80.1049454695791%2C25.826943802010476%2C-80.15103654929102&zoom=14"
     rieltors.goto()
-    # rieltors.generate_link()
+    # # rieltors.generate_link()
+    # print(rieltors.insert_data_on())
+    # print(rieltors.select_all_data_from_data_collection())
+
+    # connect status
 
 
 
-    # rieltors.read_csv_file()
 
