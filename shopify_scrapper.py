@@ -10,6 +10,9 @@ import random
 class ShopifyScrapper:
 
     def __init__(self):
+        self.webarchive = False
+        self.webarchive_url = ''
+        self.webarchive_url_domain = ''
         self.dublicate = []
         self.increment_index = 0
         self.url = ''
@@ -637,14 +640,21 @@ class ShopifyScrapper:
 
     def make_request(self,url,proxy,s):
         response = s.get(url, proxies=proxy, verify=False, timeout=5)
+        print(f"make_request {response.status_code}")
         if response.status_code == 200:
             return response
+        if response.status_code == 404:
+            return False
         else:
             time.sleep(40)
             return self.make_request(url,proxy,s)
 
     def scrap_shopify(self,all_categpries):
-        domain = self.domain
+        if self.webarchive == True:
+            domain = self.webarchive_url_domain
+        else:
+            domain = self.domain
+
         index = 0
         for category in all_categpries:
             url = domain + category
@@ -663,41 +673,41 @@ class ShopifyScrapper:
                 s = requests.Session()
                 response = self.make_request(url,proxy,s)
             except:
-                response = requests.get(url, timeout=5, headers={'User-Agent': 'Mozilla/5.0'})
+                response = requests.get(url, timeout=200, headers={'User-Agent': 'Mozilla/5.0'})
                 print("Skipping. Connnection error")
             # request link with proxy
             # time.sleep(1)
-            # response = requests.get(url, timeout=5, headers={'User-Agent': 'Mozilla/5.0'})
-            soup = bs(response.text, 'html.parser')
+            if response != False:
+                soup = bs(response.text, 'html.parser')
 
-            # find all 'a' with class product-info__caption and get href
-            for link in soup.find_all('a', class_='product-info__caption'):
-                link = link.get('href')
-                fill_link = domain + link
-                print(f"fill_link {fill_link}")
-                # # fill_link = "https://miss-minceur.com/collections/gaine-amincissante/products/string-amincissant"
-                # fill_link = "https://miss-minceur.com/collections/maillot-de-bain-gainant/products/maillot-de-bain-amincissant-femme"
-                # print(fill_link)
-                try:
-                    self.request_link_by_link(fill_link,proxy,s)
-                except Exception as e:
-                    print(e)
+                # find all 'a' with class product-info__caption and get href
+                for link in soup.find_all('a', class_='product-info__caption'):
+                    link = link.get('href')
+                    fill_link = domain + link
+                    print(f"fill_link {fill_link}")
+                    # # fill_link = "https://miss-minceur.com/collections/gaine-amincissante/products/string-amincissant"
+                    # fill_link = "https://miss-minceur.com/collections/maillot-de-bain-gainant/products/maillot-de-bain-amincissant-femme"
+                    # print(fill_link)
+                    try:
+                        self.request_link_by_link(fill_link,proxy,s)
+                    except Exception as e:
+                        print(e)
 
 
-                print("++++++++++++")
-                print(f'INDEX {index}')
-                print(f"ID COUNT {len(self.product_counter)}")
-                # remove duplicates from list
-                print("++++++++++++")
-                if index% 30 == 0:
-                    self.save_to_xlsx(self.id_by_id_arr,self.product_name_arr, self.price_arr,self.full_link_arr,
-                     self.data_value_list_arr,self.variants_arr,self.related_collections_handle_arr,
-                     self.handle_arr,self.full_description_arr,self.full_description_html_arr,
-                     self.title_arr,self.title_html_arr,self.ceo_title_arr,self.ceo_description_arr,
-                      self.images_arr,self.imge_primary_arr,self.variants_arr_primary,
-                      self.bullet_points_arr,self.h2_html_arr,self.product_id_arr,self.tags_arr,
-                      self.vendor_arr,self.type_arr)
-                index += 1
+                    print("++++++++++++")
+                    print(f'INDEX {index}')
+                    print(f"ID COUNT {len(self.product_counter)}")
+                    # remove duplicates from list
+                    print("++++++++++++")
+                    if index% 30 == 0:
+                        self.save_to_xlsx(self.id_by_id_arr,self.product_name_arr, self.price_arr,self.full_link_arr,
+                         self.data_value_list_arr,self.variants_arr,self.related_collections_handle_arr,
+                         self.handle_arr,self.full_description_arr,self.full_description_html_arr,
+                         self.title_arr,self.title_html_arr,self.ceo_title_arr,self.ceo_description_arr,
+                          self.images_arr,self.imge_primary_arr,self.variants_arr_primary,
+                          self.bullet_points_arr,self.h2_html_arr,self.product_id_arr,self.tags_arr,
+                          self.vendor_arr,self.type_arr)
+                    index += 1
             #     if index == 5:
             #         break
             #
@@ -718,14 +728,21 @@ class ShopifyScrapper:
 
 
     def get_menu_links(self):
-        url = self.domain
+        url = ''
+        if self.webarchive == True:
+            url = self.webarchive_url+""+self.domain
+
+        if self.webarchive == False:
+            url = self.domain
         all_categpries = []
-        response = requests.get(url)
+        response = requests.get(url,timeout=20)
+
         soup = bs(response.text, 'html.parser')
-        for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
+        # for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
         # for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
+        for link in soup.find('div', class_='main_nav clearfix menu-position--block logo-align--center').find_all('a'):
             menu_link = link.get('href')
-            if menu_link.startswith('/collections'):
+            if menu_link.find('/collections') != -1:
                 all_categpries.append(menu_link)
 
         return all_categpries
@@ -741,7 +758,11 @@ class ShopifyScrapper:
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.domain = "https://miss-minceur.com"
+    shopify_scrapper.webarchive = True
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20230127201255/"
+    shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
+
+    shopify_scrapper.domain = "https://planete-chaussons.com"
     shopify_scrapper.create_xls_file()
     all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
