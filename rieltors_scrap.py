@@ -262,6 +262,7 @@ class Rieltors:
                 json_state = json_res['props']['pageProps']['propertyData']['locator']['address']['state']
                 json_city = json_res['props']['pageProps']['propertyData']['locator']['address']['city']
                 json_zip = json_res['props']['pageProps']['propertyData']['locator']['address']['zipcode']
+                json_broker_name = json_data['courtesyOfBrokerage']
                 # self.state_array.append(json_state)
                 # self.city_array.append(json_city)
                 # self.zip_array.append(json_zip)
@@ -313,7 +314,7 @@ class Rieltors:
                 # print(json_city)
                 # print(json_zip)
                 try:
-                    self.insert_data_on(email, " ".join(phones_arr), full_name, json_state, json_city, json_zip, address)
+                    self.insert_data_on(email, " ".join(phones_arr), full_name, json_state, json_city, json_zip, json_broker_name)
                 except:
                     pass
         self.clean_all_variables()
@@ -352,7 +353,7 @@ class Rieltors:
                 print(f"self.link_array {len(self.link_array)}")
 
                 # save
-                if len(self.link_array) > 300:
+                if len(self.link_array) > 1000:
                     print("len(self.link_array) % 10")
                     print(len(self.link_array))
                     try:
@@ -380,7 +381,7 @@ class Rieltors:
             # get state_name
             reader = csv.DictReader(csvfile)
             for row in reader:
-                if row['state_name'] == 'Florida' or row['state_name'] == 'Texas':
+                if row['state_name'] == 'Florida' : #and row['city_ascii'] != 'Miami' and row['city_ascii'] != 'Tampa'
                     zip_arr = row['zips'].split(' ')
                     for zip in zip_arr:
                         # print(row['state_name'],row['city_ascii'],zip)
