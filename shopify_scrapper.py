@@ -187,53 +187,79 @@ class ShopifyScrapper:
             count_of_tags = len(ul_data)
             tga_index = 0
             print(count_of_tags)
+            not_iquel_status = False
             for ul in ul_data:
                 # get tag name
-                tag_name = ul.name
+
 
                 if ul is not None and len(ul.text) > 40:
+
+                    tag_name = ul.name
+                    if tag_type == '':
+                        tag_type = tag_name
+
                     print(f"tag_type {tag_type} tag_name {tag_name} ")
                     print(ul)
+                    print(f"tag_name {tag_name}")
                     if tag_type == tag_name:
+                        print('Iquil')
+                        # print(full_description_html_res)
+                        # quit()
                         # tag_value += str(ul)
                         tag_value +=  str(ul) #str(full_description_html_res[-1]) +
                         # full_description_html_res.pop(-1)
                         # full_description_html_res.append(tag_value)
                         # print(tag_value)
+                        # full_description_html_res[-1] = str(full_description_html_res[-1]) + str(ul)
                         if ul_index == len(ul_data) - 1:
                             print(f"Last index")
-                            print(tag_value)
-                            last_iteration_data = str(full_description_html_res[-1]) + str(tag_value)
-                            # # remove last element
-                            full_description_html_res.pop(-1)
-                            full_description_html_res.append(last_iteration_data)
+                            print(tag_type)
+                            print(f"description_status {description_status}")
+                            if tag_type == 'h4' and description_status == False or tag_type == 'p' and description_status == False:
+                                full_description_html_res.insert(0, str(tag_value))
+                                description_status = True
+                            else:
+                                full_description_html_res.append(tag_value)
+
+                            # add tag_value to last element in array
+                            #
+                            # print(full_description_html_res)
+                            # quit()
+                            # last_iteration_data = str(full_description_html_res[-1]) + str(tag_value)
+                            # # # remove last element
+                            # full_description_html_res.pop(-1)
+                            # full_description_html_res.append(tag_value)
 
                     elif tag_type != tag_name:
                         print(f"Not iquil")
-                        tag_type = tag_name
-                        if tag_name == 'h4' and description_status == False or tag_name == 'p' and description_status == False:
-                            if tag_value != '':
-                                full_description_html_res.insert(0,str(tag_value))
-                            else:
-                                full_description_html_res.insert(0, str(ul))
+                        print(tag_type)
+                        print(not_iquel_status)
+                        print(ul)
+                        print(f"description_status {description_status}")
+                        # if not_iquel_status == True:
+                        if tag_type == 'h4' and description_status == False or tag_type == 'p' and description_status == False:
+                            full_description_html_res.insert(0, str(tag_value))
                             description_status = True
                         else:
-                            if tag_value != '':
-                                full_description_html_res.append(str(tag_value))
-                            else:
-                                full_description_html_res.append(str(ul))
+                            full_description_html_res.append(tag_value)
 
-                        # print(tag_value)
+                        # reinstall values
+                        tag_type = tag_name
+                        # tag_value = ''
+                        tag_value = str(ul)
+                        print(f"Reinstall variables")
+
                         print("______________________________________")
-                        tag_value = ''
+                        # tag_value = ''
 
                 ul_index += 1
-            print('full_description_html_res')
-            print(len(full_description_html_res))
-            for tex in full_description_html_res:
-                print(tex)
-                print('------------------')
-            quit()
+            # print('===============================')
+            # print('full_description_html_res')
+            # print(len(full_description_html_res))
+            # for tex in full_description_html_res:
+            #     print(tex)
+            #     print('===============================')
+            # quit()
             # print('full_description_html_res')
             #
             # print(len(full_description_html_res))
@@ -381,7 +407,7 @@ class ShopifyScrapper:
         return full_description_html_primary
 
     def request_link_by_link(self,link_by_item,proxy_index,s):
-        link_by_item = "http://web.archive.org/web/20210301232014/https://www.univers-fleuri.com/products/t-shirt-a-message-fleur"
+        # link_by_item = "http://web.archive.org/web/20210616155819/https://www.univers-fleuri.com/products/chemisier-fleuri-fluide"
         print("request_link_by_link")
          # make request
         response_item = self.make_request(link_by_item, proxy_index, s)
@@ -565,11 +591,17 @@ class ShopifyScrapper:
                     self.available_arr.append(product_data['available'])
                     self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
                     self.price_varies_arr.append(product_data['price_varies'])
-                    if product_data['compare_at_price'] == 'None':
-                        self.compare_at_price_arr.append(product_data['compare_at_price'])
-                    else:
+                    print(f"product_data['compare_at_price'] {product_data['compare_at_price']}")
+
+                    if str(product_data['compare_at_price']) != 'None':
                         self.compare_at_price_arr.append(self.cut_compare_price(product_data['compare_at_price']))
-                    self.compare_at_price_max_arr.append(self.cut_compare_price(product_data['compare_at_price_max']))
+                    else:
+                        self.compare_at_price_arr.append(product_data['compare_at_price'])
+
+                    if product_data['compare_at_price_max'] == 'None':
+                        self.compare_at_price_max_arr.append(product_data['compare_at_price_max'])
+                    else:
+                        self.compare_at_price_max_arr.append(self.cut_compare_price(product_data['compare_at_price_max']))
                 except Exception as e:
                     print(e)
                     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
@@ -860,11 +892,11 @@ class ShopifyScrapper:
                         # except Exception as e:
                         #     print(e)
                         #     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
-                    if index == 5:
+                    if index == 38:
                         break
-                if index == 5:
+                if index == 38:
                     break
-            if index == 5:
+            if index == 38:
                 break
 
 
