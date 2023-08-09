@@ -173,35 +173,67 @@ class ShopifyScrapper:
             ul_data = bs(full_description_html, 'html.parser')
             # remove all h2
             h2_data = ul_data.find_all('h2')
+
             for h2 in h2_data:
                 h2.decompose()
 
             # find all ul and p
-            ul_data = ul_data.find_all(['h4','p','ul','ol'])
+
+            ul_data = ul_data.find_all(['p','h4','ul','ol','table'])
             ul_index = 0
-            tag_type = 'p'
+            tag_type = ''
             tag_value = ''
+            description_status = False
+            count_of_tags = len(ul_data)
+            tga_index = 0
+            print(count_of_tags)
             for ul in ul_data:
                 # get tag name
                 tag_name = ul.name
 
-                if tag_type == tag_name:
-                    if ul is not None and len(ul.text) > 40:
-                        tag_value += str(ul)
+                if ul is not None and len(ul.text) > 40:
+                    print(f"tag_type {tag_type} tag_name {tag_name} ")
+                    print(ul)
+                    if tag_type == tag_name:
+                        # tag_value += str(ul)
+                        tag_value +=  str(ul) #str(full_description_html_res[-1]) +
+                        # full_description_html_res.pop(-1)
+                        # full_description_html_res.append(tag_value)
+                        # print(tag_value)
+                        if ul_index == len(ul_data) - 1:
+                            print(f"Last index")
+                            print(tag_value)
+                            last_iteration_data = str(full_description_html_res[-1]) + str(tag_value)
+                            # # remove last element
+                            full_description_html_res.pop(-1)
+                            full_description_html_res.append(last_iteration_data)
 
-                if tag_type != tag_name:
-                    tag_type = tag_name
+                    elif tag_type != tag_name:
+                        print(f"Not iquil")
+                        tag_type = tag_name
+                        if tag_name == 'h4' and description_status == False or tag_name == 'p' and description_status == False:
+                            if tag_value != '':
+                                full_description_html_res.insert(0,str(tag_value))
+                            else:
+                                full_description_html_res.insert(0, str(ul))
+                            description_status = True
+                        else:
+                            if tag_value != '':
+                                full_description_html_res.append(str(tag_value))
+                            else:
+                                full_description_html_res.append(str(ul))
 
-                    if ul is not None and len(ul.text) > 40:
-                        full_description_html_res.append(str(tag_value))
+                        # print(tag_value)
+                        print("______________________________________")
                         tag_value = ''
-                        tag_value += str(ul)
 
                 ul_index += 1
-
-            if len(tag_value) > 0:
-                full_description_html_res.append(str(tag_value))
-
+            print('full_description_html_res')
+            print(len(full_description_html_res))
+            for tex in full_description_html_res:
+                print(tex)
+                print('------------------')
+            quit()
             # print('full_description_html_res')
             #
             # print(len(full_description_html_res))
@@ -349,7 +381,7 @@ class ShopifyScrapper:
         return full_description_html_primary
 
     def request_link_by_link(self,link_by_item,proxy_index,s):
-        # link_by_item = "http://web.archive.org/web/20210616155819/https://www.univers-fleuri.com/products/chemisier-fleuri-fluide"
+        link_by_item = "http://web.archive.org/web/20210301232014/https://www.univers-fleuri.com/products/t-shirt-a-message-fleur"
         print("request_link_by_link")
          # make request
         response_item = self.make_request(link_by_item, proxy_index, s)
