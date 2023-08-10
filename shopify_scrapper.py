@@ -892,11 +892,11 @@ class ShopifyScrapper:
                         # except Exception as e:
                         #     print(e)
                         #     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
-                    if index == 38:
+                    if index == 35:
                         break
-                if index == 38:
+                if index == 35:
                     break
-            if index == 38:
+            if index == 35:
                 break
 
 
@@ -954,4 +954,17 @@ if __name__ == "__main__":
     all_categpries = shopify_scrapper.get_menu_links()
     print(all_categpries)
     shopify_scrapper.scrap_shopify(all_categpries)
+
+    # # read shopify.xlsx file
+    # wb = load_workbook("shopify.xlsx")
+    # ws = wb.active
+    #
+    # data_arr = []
+    # for row in ws.iter_rows(min_row=2, max_col=1, max_row=ws.max_row):
+    #     for cell in row:
+    #         if cell.value not in data_arr:
+    #             data_arr.append(cell.value)
+    #         else:
+    #             print(f"Duplicate {cell.value}")
+    #             break
 
