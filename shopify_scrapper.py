@@ -59,6 +59,8 @@ class ShopifyScrapper:
         self.total_description_html_arr = []
         self.clean_description_html_arr = []
 
+        self.hanle = ''
+
     def remove_all_none_tags(self,soup):
         print('remove_all_none_tags')
         # remove all ul is not None and len(ul.text) > 40
@@ -105,12 +107,12 @@ class ShopifyScrapper:
         #     print(e)
         #     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
 
-        print("cut_full_description3")
+        # print("cut_full_description3")
 
         fill_description_primary = ''
         full_description_html = ''
         if self.domain == 'https://miss-minceur.com' or self.domain == 'https://www.univers-fleuri.com':
-            print("cut_full_description4")
+            # print("cut_full_description4")
             # full_description_html = soup.find('div', class_='description bottom')
             #
             # # remove all style tags
@@ -212,9 +214,9 @@ class ShopifyScrapper:
                     if tag_type == '':
                         tag_type = tag_name
 
-                    print(f"tag_type {tag_type} tag_name {tag_name} ")
-                    print(ul)
-                    print(f"tag_name {tag_name}")
+                    # print(f"tag_type {tag_type} tag_name {tag_name} ")
+                    # print(ul)
+                    # print(f"tag_name {tag_name}")
                     if tag_type == tag_name:
                         print('Iquil')
                         # print(full_description_html_res)
@@ -226,9 +228,9 @@ class ShopifyScrapper:
                         # print(tag_value)
                         # full_description_html_res[-1] = str(full_description_html_res[-1]) + str(ul)
                         if ul_index == len(ul_data) - 1:
-                            print(f"Last index")
-                            print(tag_type)
-                            print(f"description_status {description_status}")
+                            # print(f"Last index")
+                            # print(tag_type)
+                            # print(f"description_status {description_status}")
                             if tag_type == 'h4' and description_status == False or tag_type == 'p' and description_status == False:
                                 full_description_html_res.insert(0, str(tag_value))
                                 description_status = True
@@ -246,10 +248,10 @@ class ShopifyScrapper:
 
                     elif tag_type != tag_name:
                         print(f"Not iquil")
-                        print(tag_type)
-                        print(not_iquel_status)
-                        print(ul)
-                        print(f"description_status {description_status}")
+                        # print(tag_type)
+                        # print(not_iquel_status)
+                        # print(ul)
+                        # print(f"description_status {description_status}")
                         # if not_iquel_status == True:
                         if tag_type == 'h4' and description_status == False or tag_type == 'p' and description_status == False:
                             full_description_html_res.insert(0, str(tag_value))
@@ -261,9 +263,9 @@ class ShopifyScrapper:
                         tag_type = tag_name
                         # tag_value = ''
                         tag_value = str(ul)
-                        print(f"Reinstall variables")
-
-                        print("______________________________________")
+                        # print(f"Reinstall variables")
+                        #
+                        # print("______________________________________")
                         # tag_value = ''
 
                 ul_index += 1
@@ -426,7 +428,7 @@ class ShopifyScrapper:
         return full_description_html_primary
 
     def request_link_by_link(self,link_by_item,proxy_index,s):
-        # link_by_item = "http://web.archive.org/web/20210510181843/https://www.univers-fleuri.com/products/jupe-en-jean-brode"
+        # link_by_item = "http://web.archive.org/web/20210617082123/https://www.univers-fleuri.com/products/collier-fleur-resine"
         print("request_link_by_link")
 
          # make request
@@ -586,7 +588,7 @@ class ShopifyScrapper:
                             else:
                                 variants.append(product['option3'])
 
-                            self.related_collections_handle_arr.append('')
+                            self.related_collections_handle_arr.append(product_handle)
                             # print(related_col_arr)
                             # if len(related_col_arr[0]) == 0:
                             #     hh_arr = []
@@ -596,6 +598,7 @@ class ShopifyScrapper:
                             #     self.handle_arr.append(related_col_arr)
                             hh = []
                             hh.append(product_handle)
+                            print(f"product_handle {product_handle}")
                             self.handle_arr.append(hh)
                             self.full_description_arr.append(full_description)
 
@@ -619,7 +622,6 @@ class ShopifyScrapper:
                             self.available_arr.append(product_data['available'])
                             self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
                             self.price_varies_arr.append(product_data['price_varies'])
-                            print(f"product_data['compare_at_price'] {product_data['compare_at_price']}")
 
                             if str(product_data['compare_at_price']) != 'None':
                                 self.compare_at_price_arr.append(self.cut_compare_price(product_data['compare_at_price']))
@@ -717,9 +719,9 @@ class ShopifyScrapper:
             sheet.cell(row=next_row, column=1, value=str(self.id_by_id_arr[i]))
             sheet.cell(row=next_row, column=2, value=str(self.product_id_arr[i]))
             sheet.cell(row=next_row, column=3, value=str(self.full_link_arr[i]))
-            sheet.cell(row=next_row, column=4, value=str(self.handle_arr[i][0]))
-            sheet.cell(row=next_row, column=5, value=str(self.handle_arr[i][0])) # self.related_collections_handle_arr[i])
-            sheet.cell(row=next_row, column=6, value=str(self.handle_arr[i][0])) # self.related_collections_handle_arr[i])
+            sheet.cell(row=next_row, column=4, value=str(self.hanle))
+            sheet.cell(row=next_row, column=5, value=str(self.related_collections_handle_arr[i])) #
+            sheet.cell(row=next_row, column=6, value=str(self.related_collections_handle_arr[i])) # self.related_collections_handle_arr[i])
             sheet.cell(row=next_row, column=7, value=str(self.title_arr[i]))
             sheet.cell(row=next_row, column=8, value=str(self.title_html_arr[i]))
             sheet.cell(row=next_row, column=9, value=str(self.ceo_title_arr[i]))
@@ -854,6 +856,13 @@ class ShopifyScrapper:
         except:
             pass
 
+
+    def cut_collection_link(self,link):
+        col_p = link.find('/collections/')
+        prod_pos = link.find('/products/')
+        self.hanle = link[col_p+13:]
+        print(self.hanle)
+
     def scrap_shopify(self,all_categpries):
         if self.webarchive == True:
             domain = self.webarchive_url_domain
@@ -862,93 +871,97 @@ class ShopifyScrapper:
 
         index = 0
         for category in all_categpries:
-            url = domain + category
-            print(f"url for collection {url}")
-            ip_addresses = [
-                "173.176.14.246:3128",
-                "129.153.157.63:3128",
-                "141.101.115.2:80",
-                "172.67.34.58:80",
-                "172.67.177.251:80",
-                "203.22.223.150:80"
-            ]
-            try:
-                proxy_index = random.choice(ip_addresses)
-                proxy = {"http": proxy_index}
-                s = requests.Session()
-                response = self.make_request(url,proxy,s)
-            except:
-                response = requests.get(url, timeout=200, headers={'User-Agent': 'Mozilla/5.0'})
-                print("Skipping. Connnection error")
+            if "/collections/" in category:
+                self.cut_collection_link(category)
 
-            # request link with proxy
-            if response != False and response != None:
+                url = domain + category
+                print(f"url for collection {url}")
+                ip_addresses = [
+                    "173.176.14.246:3128",
+                    "129.153.157.63:3128",
+                    "141.101.115.2:80",
+                    "172.67.34.58:80",
+                    "172.67.177.251:80",
+                    "203.22.223.150:80"
+                ]
+                try:
+                    proxy_index = random.choice(ip_addresses)
+                    proxy = {"http": proxy_index}
+                    s = requests.Session()
+                    response = self.make_request(url,proxy,s)
+                except:
+                    response = requests.get(url, timeout=200, headers={'User-Agent': 'Mozilla/5.0'})
+                    print("Skipping. Connnection error")
 
-                soup = bs(response.text, 'html.parser')
+                # request link with proxy
+                if response != False and response != None:
 
-                # find all 'a' with class product-info__caption and get href
-                for link in soup.find_all('a'): # , class_='product-info__caption'
-                    link = link.get('href')
-                    fill_link = ''
+                    soup = bs(response.text, 'html.parser')
 
-                    if link != None:
+                    # find all 'a' with class product-info__caption and get href
+                    for link in soup.find_all('a'): # , class_='product-info__caption'
+                        link = link.get('href')
+                        fill_link = ''
 
-                        if self.webarchive == True:
-                            print(link)
-                            if link.find("/products/") != -1 and "/collections/" not in link:
-                                if "web.archive" in link:
-                                    fill_link = link
-                                    print(f"fl {fill_link}")
-                                else:
-                                    fill_link = domain + link
-                                    print(f"fl {fill_link}")
+                        if link != None:
 
-                        if self.webarchive == False:
-                            fill_link = domain + link
-                            fill_link = ''
+                            if self.webarchive == True:
+                                # print(link)
+                                if link.find("/products/") != -1 and "/collections/" not in link:
+                                    if "web.archive" in link:
+                                        # fill_link = self.cut_collection_link(link)
+                                        fill_link = link
+                                        print(f"fl {fill_link}")
+                                    else:
+                                        fill_link = domain + link
+                                        print(f"fl {fill_link}")
 
-                        if len(fill_link) > 0:
-                            # try:
-                                print(f"Link origin {fill_link}")
-                                self.request_link_by_link(fill_link,proxy,s)
+                            if self.webarchive == False:
+                                fill_link = domain + link
+                                fill_link = ''
 
-                                print("++++++++++++")
-                                print(f'INDEX {index}')
-                                print(f"ID COUNT {len(self.product_counter)}")
-                                # remove duplicates from list
-                                print("++++++++++++")
-                                # if index % 2 == 0:
+                            if len(fill_link) > 0:
+                                # try:
+                                    print(f"Link origin {fill_link}")
+                                    self.request_link_by_link(fill_link,proxy,s)
+
+                                    print("++++++++++++")
+                                    print(f'INDEX {index}')
+                                    print(f"ID COUNT {len(self.product_counter)}")
+
+
+                                    # remove duplicates from list
+                                    print("++++++++++++")
+                                    # if index % 2 == 0:
                                     # try:
-                                self.save_to_xlsx()
+                                    self.save_to_xlsx()
                                     # except Exception as e:
                                     #     print(e)
                                     #     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
-                                index += 1
-                                print(f"Prim INDEX = {index}")
+                                    index += 1
+                                    print(f"Prim INDEX = {index}")
 
 
-                            # except Exception as e:
-                            #     print(e)
-                            #     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
-                        if index == 25:
-                            break
-                    if index == 25:
-                        break
-                if index == 25:
-                    break
+                                # except Exception as e:
+                                #     print(e)
+                                #     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
+                    #         if index == 5:
+                    #             break
+                    #     if index == 5:
+                    #         break
+                    # if index == 5:
+                    #     break
 
 
-
-
-
-            try:
-                self.save_to_xlsx()
-            except:
-                pass
-            try:
-                self.save_to_xlsx_product_count()
-            except:
-                pass
+                # try:
+                #     self.save_to_xlsx()
+                # except:
+                #     pass
+        try:
+            time.sleep(15)
+            self.save_to_xlsx_product_count()
+        except:
+            pass
 
 
     def get_menu_links(self):
@@ -983,27 +996,27 @@ class ShopifyScrapper:
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.webarchive = True
-    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
-    shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-
-    shopify_scrapper.domain = "https://www.univers-fleuri.com"
-    shopify_scrapper.create_xls_file()
-    all_categpries = shopify_scrapper.get_menu_links()
-    print(all_categpries)
-    shopify_scrapper.scrap_shopify(all_categpries)
-
-    # # read shopify.xlsx file
-    # wb = load_workbook("shopify.xlsx")
-    # ws = wb.active
+    # shopify_scrapper.webarchive = True
+    # shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
+    # shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
     #
-    # data_arr = []
-    # for row in ws.iter_rows(min_row=2, max_col=1, max_row=ws.max_row):
-    #     for cell in row:
-    #         print(cell.value)
-    #         if cell.value not in data_arr:
-    #             data_arr.append(cell.value)
-    #         else:
-    #             print(f"Duplicate {cell.value}")
-    #             break
+    # shopify_scrapper.domain = "https://www.univers-fleuri.com"
+    # shopify_scrapper.create_xls_file()
+    # all_categpries = shopify_scrapper.get_menu_links()
+    # print(all_categpries)
+    # shopify_scrapper.scrap_shopify(all_categpries)
+
+    # read shopify.xlsx file
+    wb = load_workbook("shopify.xlsx")
+    ws = wb.active
+
+    data_arr = []
+    for row in ws.iter_rows(min_row=2, max_col=1, max_row=ws.max_row):
+        for cell in row:
+            print(cell.value)
+            if cell.value not in data_arr:
+                data_arr.append(cell.value)
+            else:
+                print(f"Duplicate {cell.value}")
+                break
 
