@@ -5,6 +5,7 @@ from openpyxl import Workbook,load_workbook
 from openpyxl.styles import PatternFill
 import json
 import sys
+import pandas as pd
 import random
 
 class ShopifyScrapper:
@@ -715,52 +716,52 @@ class ShopifyScrapper:
 
             # Step 4: Append the data to the selected worksheet
             # print(self.handle_arr[i])
-
-            sheet.cell(row=next_row, column=1, value=str(self.id_by_id_arr[i]))
-            sheet.cell(row=next_row, column=2, value=str(self.product_id_arr[i]))
-            sheet.cell(row=next_row, column=3, value=str(self.full_link_arr[i]))
-            sheet.cell(row=next_row, column=4, value=str(self.hanle))
-            sheet.cell(row=next_row, column=5, value=str(self.related_collections_handle_arr[i])) #
-            sheet.cell(row=next_row, column=6, value=str(self.related_collections_handle_arr[i])) # self.related_collections_handle_arr[i])
-            sheet.cell(row=next_row, column=7, value=str(self.title_arr[i]))
-            sheet.cell(row=next_row, column=8, value=str(self.title_html_arr[i]))
-            sheet.cell(row=next_row, column=9, value=str(self.ceo_title_arr[i]))
-            sheet.cell(row=next_row, column=10, value=str(self.ceo_description_arr[i]))
-            sheet.cell(row=next_row, column=11, value=str(self.product_name_arr[i]))
-            sheet.cell(row=next_row, column=12, value=str(self.full_description_arr[i]))
-            sheet.cell(row=next_row, column=13, value=str(self.total_description_html_arr[i])).fill = PatternFill(start_color='ADFF2F', end_color='ADFF2F', fill_type='solid')
-            sheet.cell(row=next_row, column=14, value=str(self.h2_html_arr[i])).fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
-            sheet.cell(row=next_row, column=15, value=str(self.clean_description_html_arr[i])).fill = PatternFill(start_color='B0E0E6', end_color='B0E0E6', fill_type='solid')
-            sheet.cell(row=next_row, column=16, value=str(bullet_points_variant1)).fill = PatternFill(start_color='CD853F', end_color='CD853F', fill_type='solid')
-            sheet.cell(row=next_row, column=17, value=str(bullet_points_variant2)).fill = PatternFill(start_color='FFEBCD', end_color='FFEBCD', fill_type='solid')
-            sheet.cell(row=next_row, column=18, value=str(bullet_points_variant3)).fill = PatternFill(start_color='FF7F50', end_color='FF7F50', fill_type='solid')
-            sheet.cell(row=next_row, column=19, value=str(self.published_at[i]))
-            sheet.cell(row=next_row, column=20, value=str(self.created_at[i]))
-            sheet.cell(row=next_row, column=21, value=str(self.vendor_arr[i]))
-            sheet.cell(row=next_row, column=22, value=str(self.type_arr[i]))
-            sheet.cell(row=next_row, column=23, value=str(self.tags_arr[i]))
-            sheet.cell(row=next_row, column=24, value=str(self.price_arr[i]))
-            sheet.cell(row=next_row, column=25, value=str(self.price_min_arr[i]))
-            sheet.cell(row=next_row, column=26, value=str(self.price_max_arr[i]))
-            sheet.cell(row=next_row, column=27, value=str(self.available_arr[i]))
-            sheet.cell(row=next_row, column=28, value=str(self.price_varies_arr[i]))
-            sheet.cell(row=next_row, column=29, value=str(self.compare_at_price_arr[i]))
-            sheet.cell(row=next_row, column=30, value=str(self.compare_at_price_max_arr[i]))
-            sheet.cell(row=next_row, column=31, value=str(self.compare_at_price_varies_arr[i]))
-            sheet.cell(row=next_row, column=32, value=str(''))
-            sheet.cell(row=next_row, column=33, value=str(''))
-            sheet.cell(row=next_row, column=34, value=str(self.images_arr[i]))
-            sheet.cell(row=next_row, column=35, value=str(self.imge_primary_arr[i]))
-            sheet.cell(row=next_row, column=36, value=str(self.variants_arr[i]))
-            sheet.cell(row=next_row, column=37, value=str(option1))
-            sheet.cell(row=next_row, column=38, value=str(option2))
-            sheet.cell(row=next_row, column=39, value=str(option3))
-            sheet.cell(row=next_row, column=40, value=str(self.secure_url_arr[i]))
-            sheet.cell(row=next_row, column=41, value=str(''))
-            sheet.cell(row=next_row, column=42, value=str(self.price_arr[i]))
-            next_row += 1
-        # except:
-        #     pass
+            try:
+                sheet.cell(row=next_row, column=1, value=str(self.id_by_id_arr[i]))
+                sheet.cell(row=next_row, column=2, value=str(self.product_id_arr[i]))
+                sheet.cell(row=next_row, column=3, value=str(self.full_link_arr[i]))
+                sheet.cell(row=next_row, column=4, value=str(self.hanle))
+                sheet.cell(row=next_row, column=5, value=str(self.related_collections_handle_arr[i])) #
+                sheet.cell(row=next_row, column=6, value=str(self.related_collections_handle_arr[i])) # self.related_collections_handle_arr[i])
+                sheet.cell(row=next_row, column=7, value=str(self.title_arr[i]))
+                sheet.cell(row=next_row, column=8, value=str(self.title_html_arr[i]))
+                sheet.cell(row=next_row, column=9, value=str(self.ceo_title_arr[i]))
+                sheet.cell(row=next_row, column=10, value=str(self.ceo_description_arr[i]))
+                sheet.cell(row=next_row, column=11, value=str(self.product_name_arr[i]))
+                sheet.cell(row=next_row, column=12, value=str(self.full_description_arr[i]))
+                sheet.cell(row=next_row, column=13, value=str(self.total_description_html_arr[i])).fill = PatternFill(start_color='ADFF2F', end_color='ADFF2F', fill_type='solid')
+                sheet.cell(row=next_row, column=14, value=str(self.h2_html_arr[i])).fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+                sheet.cell(row=next_row, column=15, value=str(self.clean_description_html_arr[i])).fill = PatternFill(start_color='B0E0E6', end_color='B0E0E6', fill_type='solid')
+                sheet.cell(row=next_row, column=16, value=str(bullet_points_variant1)).fill = PatternFill(start_color='CD853F', end_color='CD853F', fill_type='solid')
+                sheet.cell(row=next_row, column=17, value=str(bullet_points_variant2)).fill = PatternFill(start_color='FFEBCD', end_color='FFEBCD', fill_type='solid')
+                sheet.cell(row=next_row, column=18, value=str(bullet_points_variant3)).fill = PatternFill(start_color='FF7F50', end_color='FF7F50', fill_type='solid')
+                sheet.cell(row=next_row, column=19, value=str(self.published_at[i]))
+                sheet.cell(row=next_row, column=20, value=str(self.created_at[i]))
+                sheet.cell(row=next_row, column=21, value=str(self.vendor_arr[i]))
+                sheet.cell(row=next_row, column=22, value=str(self.type_arr[i]))
+                sheet.cell(row=next_row, column=23, value=str(self.tags_arr[i]))
+                sheet.cell(row=next_row, column=24, value=str(self.price_arr[i]))
+                sheet.cell(row=next_row, column=25, value=str(self.price_min_arr[i]))
+                sheet.cell(row=next_row, column=26, value=str(self.price_max_arr[i]))
+                sheet.cell(row=next_row, column=27, value=str(self.available_arr[i]))
+                sheet.cell(row=next_row, column=28, value=str(self.price_varies_arr[i]))
+                sheet.cell(row=next_row, column=29, value=str(self.compare_at_price_arr[i]))
+                sheet.cell(row=next_row, column=30, value=str(self.compare_at_price_max_arr[i]))
+                sheet.cell(row=next_row, column=31, value=str(self.compare_at_price_varies_arr[i]))
+                sheet.cell(row=next_row, column=32, value=str(''))
+                sheet.cell(row=next_row, column=33, value=str(''))
+                sheet.cell(row=next_row, column=34, value=str(self.remove_webarchive_from_img(self.images_arr[i])))
+                sheet.cell(row=next_row, column=35, value=str(self.remove_webarchive_from_img(self.imge_primary_arr[i])))
+                sheet.cell(row=next_row, column=36, value=str(self.variants_arr[i]))
+                sheet.cell(row=next_row, column=37, value=str(option1))
+                sheet.cell(row=next_row, column=38, value=str(option2))
+                sheet.cell(row=next_row, column=39, value=str(option3))
+                sheet.cell(row=next_row, column=40, value=str(self.remove_webarchive_from_img(self.secure_url_arr[i])))
+                sheet.cell(row=next_row, column=41, value=str(''))
+                sheet.cell(row=next_row, column=42, value=str(self.price_arr[i]))
+                next_row += 1
+            except:
+                pass
 
 
         # Step 5: Save the changes back to the XLSX file
@@ -777,6 +778,17 @@ class ShopifyScrapper:
             if type(value) is list :# and name != 'product_counter' and name != 'dublicate'
                 value.clear()
 
+    def remove_webarchive_from_img(self, img):
+        if img != '':
+            if self.webarchive == True:
+                img_arr = img.split(',')
+                for i,im in enumerate(img_arr):
+                    end_pos = im.find('https://cdn')
+                    img_arr[i] = im[end_pos:]
+
+            return ",".join(img_arr)
+        else:
+            return img
 
     def save_to_csv(self,id_by_id_arr,product_name_arr, price_arr,full_link_arr,
                     data_value_list_arr,variants_arr,related_collections_handle_arr,handle_arr,
@@ -933,11 +945,11 @@ class ShopifyScrapper:
                                     # remove duplicates from list
                                     print("++++++++++++")
                                     # if index % 2 == 0:
-                                    # try:
-                                    self.save_to_xlsx()
-                                    # except Exception as e:
-                                    #     print(e)
-                                    #     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
+                                    try:
+                                        self.save_to_xlsx()
+                                    except Exception as e:
+                                        print(e)
+                                        print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
                                     index += 1
                                     print(f"Prim INDEX = {index}")
 
@@ -957,11 +969,12 @@ class ShopifyScrapper:
                 #     self.save_to_xlsx()
                 # except:
                 #     pass
-        try:
-            time.sleep(15)
-            self.save_to_xlsx_product_count()
-        except:
-            pass
+        self.save_to_xlsx()
+        # try:
+        #     time.sleep(15)
+        #     self.save_to_xlsx_product_count()
+        # except:
+        #     pass
 
 
     def get_menu_links(self):
@@ -994,29 +1007,105 @@ class ShopifyScrapper:
         ws.append(["id","product ID","full_link","handle","collection_handele","related_collections_handle","title","title_html","ceo_title","ceo_description","product_name","full_description","full_description_html","h2_html","description_html","bullet_points_html","bullet_points_html","bullet_points_html","published_at","created_at","vendor","type","tags","price","price_min","price_max","available","price_varies","compare_at_price","compare_at_price_max","compare_at_price_varies","requires_selling_plan","selling_plan_groups","images","featured_image","variants","option1","option2","option3","variant featured_image","variant compare_at_price","variant price"])
         wb.save("shopify.xlsx")
 
+    def clean_duplicates(self):
+        wb = load_workbook("shopify.xlsx")
+        sheet = wb.worksheets[0]
+        data_arr = []
+        hendler_arr = []
+        remove_indexs_arr = []
+        hendler_origin_arr = []
+        # Iterate over the rows in the sheet
+        indexs = 0
+        for row in sheet:
+            ids = row[0].value
+
+            if ids in data_arr:
+                index_ids = data_arr.index(ids)
+                print(f"Index {indexs}")
+                print(f"ID {ids}")
+                print(f"Duble value {data_arr[index_ids]}")
+                print(f"Dublicate index {index_ids}")
+                print("Dublicate")
+                if str(row[3].value) != str(hendler_arr[index_ids]):
+                    hendler_arr[index_ids] = hendler_arr[index_ids] + "," + row[3].value
+
+                # handle = row[3].value
+                # collection_handele = row[4].value
+                # related_collections_handle = row[5].value
+                remove_indexs_arr.append(ids)
+            else:
+                data_arr.append(str(ids))
+                hendler_arr.append(str(row[3].value))
+                hendler_origin_arr.append(str(row[3].value))
+            indexs += 1
+
+        for h_index, hend in enumerate(hendler_arr):
+            print(hend)
+            print(data_arr[h_index])
+            print("++++++++++++++")
+            # update data
+            sheet.cell(row=h_index + 1, column=4).value = hendler_origin_arr[h_index]
+            sheet.cell(row=h_index + 1, column=5).value = hend
+            sheet.cell(row=h_index + 1, column=6).value = hend
+
+        wb.save("shopify.xlsx")
+        wb.close()
+
+        # remove dublicates using pandas
+        df = pd.read_excel('shopify.xlsx')
+        df.drop_duplicates(subset=['id'], inplace=True)
+        df.to_excel('shopify.xlsx', index=False)
+        print("Done")
+
+
+
+        # rename E0 field to hendler_2
+        wb = load_workbook("shopify.xlsx")
+        sheet = wb.worksheets[0]
+
+        # count products
+        pp_arr = []
+        for row in sheet:
+            p_ids = row[1].value
+            print(p_ids)
+            if ids not in pp_arr:
+                pp_arr.append(p_ids)
+        print(len(pp_arr))
+
+        sheet.cell(row=1, column=5).value = "collection_handele"
+        sheet.cell(row=1, column=6).value = "related_collections_handle"
+        wb.save("shopify.xlsx")
+        wb.close()
+
+
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    # shopify_scrapper.webarchive = True
-    # shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
-    # shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-    #
-    # shopify_scrapper.domain = "https://www.univers-fleuri.com"
-    # shopify_scrapper.create_xls_file()
-    # all_categpries = shopify_scrapper.get_menu_links()
-    # print(all_categpries)
-    # shopify_scrapper.scrap_shopify(all_categpries)
+    shopify_scrapper.webarchive = True
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
+    shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
+
+    shopify_scrapper.domain = "https://www.univers-fleuri.com"
+    shopify_scrapper.create_xls_file()
+    all_categpries = shopify_scrapper.get_menu_links()
+    print(all_categpries)
+    shopify_scrapper.scrap_shopify(all_categpries)
+    shopify_scrapper.clean_duplicates()
 
     # read shopify.xlsx file
-    wb = load_workbook("shopify.xlsx")
-    ws = wb.active
 
-    data_arr = []
-    for row in ws.iter_rows(min_row=2, max_col=1, max_row=ws.max_row):
-        for cell in row:
-            print(cell.value)
-            if cell.value not in data_arr:
-                data_arr.append(cell.value)
-            else:
-                print(f"Duplicate {cell.value}")
-                break
+    # wb = load_workbook("shopify.xlsx")
+    # sheet = wb.worksheets[0]
+    # names = []
+    #
+    # # Iterate over the rows in the sheet
+    # indexs = 0
+    # for row in sheet:
+    #     ids = row[1].value
+    #     if ids not in names:
+    #         names.append(ids)
+    #     print(ids)
+    #     indexs+= 1
+    #
+    # print(len(names))
+
 
