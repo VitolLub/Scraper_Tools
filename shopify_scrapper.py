@@ -1035,12 +1035,13 @@ class ShopifyScrapper:
                 print()
                 if str(row[3].value) != str(hendler_arr[index_ids]):
                     print(f"Related {hendler_arr[index_ids]  +','+ row[3].value}")
-                    hendler_arr[index_ids] = hendler_arr[index_ids] + "," + row[3].value
-                    row[4].value = hendler_arr[index_ids] + "," + row[3].value
+                    row[4].value = row[4].value.replace(hendler_arr[index_ids],"")
 
-                # handle = row[3].value
-                # collection_handele = row[4].value
-                # related_collections_handle = row[5].value
+                    full_collection = hendler_arr[index_ids] + "," + row[3].value
+
+                    row[4].value = full_collection
+                    print(f"Real data {row[4].value}")
+
                 remove_indexs_arr.append(ids)
             else:
                 data_arr.append(str(ids))
@@ -1048,77 +1049,30 @@ class ShopifyScrapper:
                 hendler_origin_arr.append(str(row[3].value))
             indexs += 1
 
-        # for h_index, hend in enumerate(hendler_arr):
-        #     # print(hend)
-        #     # print(data_arr[h_index])
-        #     # print("++++++++++++++")
-        #     # update data
-        #     sheet.cell(row=h_index + 1, column=4).value = hendler_origin_arr[h_index]
-        #     sheet.cell(row=h_index + 1, column=5).value = hend
-        #     sheet.cell(row=h_index + 1, column=6).value = hend
 
         wb.save("shopify.xlsx")
         wb.close()
 
         # remove dublicates using pandas
         df = pd.read_excel('shopify.xlsx')
-        df.drop_duplicates(subset=['id'], keep='last')
+        df.drop_duplicates(subset=['id'], inplace=True, keep='last')
         df.to_excel('shopify.xlsx', index=False)
         print("Done")
 
 
-
-        # # rename E0 field to hendler_2
-        # wb = load_workbook("shopify.xlsx")
-        # sheet = wb.worksheets[0]
-        # # in end of A write len(pp_arr)
-        # next_row = sheet.max_row + 1
-        # # count products
-        # pp_arr = []
-        # for row in sheet:
-        #     p_ids = row[1].value
-        #     print(p_ids)
-        #     if p_ids not in pp_arr:
-        #         pp_arr.append(p_ids)
-        # print(len(pp_arr))
-
-        sheet.cell(row=1, column=5).value = "collection_handele"
-        sheet.cell(row=1, column=6).value = "related_collections_handle"
-        # sheet.cell(row=next_row, column=1, value="Product Quantity:" + str(len(pp_arr)))
-
-
-        wb.save("shopify.xlsx")
-        wb.close()
-
-
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    # shopify_scrapper.webarchive = True
-    # shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
-    # shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-    #
-    # shopify_scrapper.domain = "https://www.univers-fleuri.com"
-    # shopify_scrapper.create_xls_file()
-    # all_categpries = shopify_scrapper.get_menu_links()
-    # print(all_categpries)
-    # shopify_scrapper.scrap_shopify(all_categpries)
+    shopify_scrapper.webarchive = True
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
+    shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
+
+    shopify_scrapper.domain = "https://www.univers-fleuri.com"
+    shopify_scrapper.create_xls_file()
+    all_categpries = shopify_scrapper.get_menu_links()
+    print(all_categpries)
+    shopify_scrapper.scrap_shopify(all_categpries)
     shopify_scrapper.clean_duplicates()
 
-    # read shopify.xlsx file
 
-    # wb = load_workbook("shopify.xlsx")
-    # sheet = wb.worksheets[0]
-    # names = []
-    #
-    # # Iterate over the rows in the sheet
-    # indexs = 0
-    # for row in sheet:
-    #     ids = row[1].value
-    #     if ids not in names:
-    #         names.append(ids)
-    #     print(ids)
-    #     indexs+= 1
-    #
-    # print(len(names))
 
 
