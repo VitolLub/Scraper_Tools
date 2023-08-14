@@ -65,12 +65,13 @@ class ShopifyScrapper:
     def remove_all_none_tags(self,soup):
         # print('remove_all_none_tags')
         # remove all ul is not None and len(ul.text) > 40
-        uls = soup.find_all(['p','h4','ul','ol','table'])
+        uls = soup.find_all(['p','h4','ul','ol','table','br'])
         for ul in uls:
             # print(ul)
             if ul is None or len(ul.text) < 40:
+                # if ul children the same like parent, then remove
                 ul.decompose()
-        # print('remove_all_none_tags END')
+
         return soup
 
     def cut_full_description(self,soup,full_description):
@@ -112,251 +113,130 @@ class ShopifyScrapper:
 
         fill_description_primary = ''
         full_description_html = ''
-        if self.domain == 'https://miss-minceur.com' or self.domain == 'https://www.univers-fleuri.com':
-            # print("cut_full_description4")
-            # full_description_html = soup.find('div', class_='description bottom')
-            #
-            # # remove all style tags
-            # full_style_tags = full_description_html.find_all(style=True)
-            # for style_tag2 in full_style_tags:
-            #     # remove style attr
-            #     del style_tag2['style']
-            #     del style_tag2['data-mce-style']
-            #     del style_tag2['data-mce-fragment']
-            #     del style_tag2['class']
-            #     del style_tag2['data-mce-fragment']
-            #     del style_tag2['data-mce-selected']
-            #     del style_tag2['width']
-            #     del style_tag2['border']
-            #     del style_tag2['data-sheets-value']
-            #
-            # full_description_html = full_description_html
+        # if self.domain == 'https://miss-minceur.com' or self.domain == 'https://www.univers-fleuri.com':
+
+        full_description_html = str(full_description)
+        full_description_html_res = []
+
+        ul_data = bs(full_description_html, 'html.parser')
+        # remove all h2
+        h2_data = ul_data.find_all('h2')
+
+        for h2 in h2_data:
+            h2.decompose()
+
+        ul_data = ul_data
+
+        # find all ul and p
+        ul_data = self.remove_all_none_tags(ul_data)
+
+        ul_data = ul_data.find_all(['p', 'h4', 'ul', 'ol', 'table'])
+        ul_index = 0
+        tag_type = ''
+        tag_value = ''
+        description_status = False
+        count_of_tags = len(ul_data)
+        tga_index = 0
+        # print(f"count_of_tags {count_of_tags}")
+        not_iquel_status = False
+        for ul in ul_data:
 
 
-            # remove h2
-            # h2_html = full_description_html.find_all('h2')
-            # index = 0
-            # for h2 in h2_html:
-            #     if index == 0:
-            #         h2_html_origin = str(h2)
-            #     h2.decompose()
-            #     index += 1
-            # full_description_html = bs(str(full_description_html), 'html.parser')
-            # get html
-            full_description_html = str(full_description)
-            # print(full_description_html)
-            # quit()
-            full_description_html_res = []
-            # if str(full_description_html).find('✂') != -1:
-            #     full_description_html_res = str(full_description_html).split('✂')
-            # elif str(full_description_html).find('▶') != -1:
-            #     full_description_html_res = str(full_description_html).split('▶')
-            # elif str(full_description_html).find('👗') != -1:
-            #     full_description_html_res = str(full_description_html).split('👗')
-            # elif str(full_description_html).find('<table') != -1 and str(full_description_html).find('<ul') != -1:
-            #     # cut data inside table
-            #     tb_data = bs(full_description_html, 'html.parser')
-            #     tbale_data = tb_data.find_all('table')
-            #     table_data = ''
-            #     for table in tbale_data:
-            #         table_data = str(table)
-            #         print(table_data)
-            #         table.decompose()
-            #
-            #
-            #     pall_primary = ''
-            #     pall_data = tb_data.find_all('p')
-            #     for p in pall_data:
-            #         pall_primary += str(p)
-            #     full_description_html_res.append(str(pall_primary))
-            #
-            #     ulale_data = tb_data.find_all('ul')
-            #     tul_data = ''
-            #     for uls in ulale_data:
-            #         tul_data = uls
-            #     full_description_html_res.append(str(tul_data))
-            #     full_description_html_res.append(str(table_data))
-            #
-            # elif str(full_description_html).find('<ul') != -1:
-            # cut data inside table
-            # get data inside table
-            # print(f"Ul pattern")
+            if ul is not None and len(ul.text) > 40:
 
+                tag_name = ul.name
+                if tag_type == '':
+                    tag_type = tag_name
 
-
-            ul_data = bs(full_description_html, 'html.parser')
-            # remove all h2
-            h2_data = ul_data.find_all('h2')
-
-            for h2 in h2_data:
-                h2.decompose()
-
-            ul_data = ul_data
-
-            # find all ul and p
-            ul_data = self.remove_all_none_tags(ul_data)
-
-            ul_data = ul_data.find_all(['p', 'h4', 'ul', 'ol', 'table'])
-            ul_index = 0
-            tag_type = ''
-            tag_value = ''
-            description_status = False
-            count_of_tags = len(ul_data)
-            tga_index = 0
-            # print(f"count_of_tags {count_of_tags}")
-            not_iquel_status = False
-            for ul in ul_data:
-                # get tag name
-
-
-                if ul is not None and len(ul.text) > 40:
-
-                    tag_name = ul.name
-                    if tag_type == '':
-                        tag_type = tag_name
-
-                    # print(f"tag_type {tag_type} tag_name {tag_name} ")
-                    # print(ul)
-                    # print(f"tag_name {tag_name}")
-                    if tag_type == tag_name:
-                        # print('Iquil')
-                        # print(full_description_html_res)
-                        # quit()
-                        # tag_value += str(ul)
+                if tag_type == tag_name:
+                    # print('Iquil')
+                    # print(full_description_html_res)
+                    # quit()
+                    # tag_value += str(ul)
+                    if tag_value.find(str(ul)) == -1:
                         tag_value +=  str(ul) #str(full_description_html_res[-1]) +
-                        # full_description_html_res.pop(-1)
-                        # full_description_html_res.append(tag_value)
-                        # print(tag_value)
-                        # full_description_html_res[-1] = str(full_description_html_res[-1]) + str(ul)
-                        if ul_index == len(ul_data) - 1:
-                            # print(f"Last index")
-                            # print(tag_type)
-                            # print(f"description_status {description_status}")
-                            if tag_type == 'h4' and description_status == False or tag_type == 'p' and description_status == False:
-                                full_description_html_res.insert(0, str(tag_value))
-                                description_status = True
-                            else:
-                                full_description_html_res.append(tag_value)
-
-                            # add tag_value to last element in array
-                            #
-                            # print(full_description_html_res)
-                            # quit()
-                            # last_iteration_data = str(full_description_html_res[-1]) + str(tag_value)
-                            # # # remove last element
-                            # full_description_html_res.pop(-1)
-                            # full_description_html_res.append(tag_value)
-
-                    elif tag_type != tag_name:
-                        # print(f"Not iquil")
+                    # full_description_html_res.pop(-1)
+                    # full_description_html_res.append(tag_value)
+                    # print(tag_value)
+                    # full_description_html_res[-1] = str(full_description_html_res[-1]) + str(ul)
+                    if ul_index == len(ul_data) - 1:
+                        # print(f"Last index")
                         # print(tag_type)
-                        # print(not_iquel_status)
-                        # print(ul)
                         # print(f"description_status {description_status}")
-                        # if not_iquel_status == True:
                         if tag_type == 'h4' and description_status == False or tag_type == 'p' and description_status == False:
                             full_description_html_res.insert(0, str(tag_value))
                             description_status = True
                         else:
                             full_description_html_res.append(tag_value)
 
-                        # reinstall values
-                        tag_type = tag_name
-                        # tag_value = ''
-                        tag_value = str(ul)
-                        # print(f"Reinstall variables")
-                        #
-                        # print("______________________________________")
-                        # tag_value = ''
 
-                ul_index += 1
-            # print('===============================')
-            # print('full_description_html_res')
-            # print(len(full_description_html_res))
-            # for tex in full_description_html_res:
-            #     print(tex)
-            #     print('===============================')
-            # quit()
-            # print('full_description_html_res')
-            #
-            # print(len(full_description_html_res))
-            # for full_description_html_res_item in full_description_html_res:
-            #     print(full_description_html_res_item)
-            #     print('------------------')
-            #
-            # quit()
+                elif tag_type != tag_name:
+                    if tag_type == 'h4' and description_status == False or tag_type == 'p' and description_status == False:
+                        full_description_html_res.insert(0, str(tag_value))
+                        description_status = True
+                    else:
+                        full_description_html_res.append(tag_value)
 
-            #     pall_primary = ''
-            #     pall_data = ul_data.find_all('p')
-            #     for p in pall_data:
-            #         pall_primary += str(p)
-            #     full_description_html_res.append(str(pall_primary))
-            #
-            #     ulale_data = ul_data.find_all('ul')
-            #     tul_data = ''
-            #     for uls in ulale_data:
-            #         tul_data = uls
-            #     full_description_html_res.append(str(tul_data))
-            #
-            # elif str(full_description_html).find('<table') != -1:
-            #     # cut data inside table
-            #     # get data inside table
-            #     tb_data = bs(full_description_html, 'html.parser')
-            #
-            #     tbale_data = tb_data.find_all('table')
-            #     table_data = ''
-            #     for table in tbale_data:
-            #         table_data = table
-            #         table.decompose()
-            #
-            #     pall_primary = ''
-            #     pall_data = tb_data.find_all('p')
-            #     for p in pall_data:
-            #         pall_primary+=str(p)
-            #     full_description_html_res.append(str(pall_primary))
-            #     full_description_html_res.append(str(table_data))
+                    # reinstall values
+                    tag_type = tag_name
+                    # tag_value = ''
+                    tag_value = str(ul)
 
-            # print(f"full_description_html_res {full_description_html_res}")
-            try:
-                # print('++++++++++++++++++++++++++')
-                # print(type(full_description_html_res))
-                # print(len(full_description_html_res))
-                fill_description_primary = full_description_html_res[0]
-            except Exception as e:
-                # print("--------------------------")
-                # print(full_description_html)
-                fill_description_primary = full_description_html
-                print(e)
-                print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
+            ul_index += 1
+        # print('===============================')
+        # print('full_description_html_res')
+        # print(len(full_description_html_res))
+        # for tex in full_description_html_res:
+        #     print(tex)
+        #     print('===============================')
+        # quit()
+        # print('full_description_html_res')
+        #
+        # print(len(full_description_html_res))
+        # for full_description_html_res_item in full_description_html_res:
+        #     print(full_description_html_res_item)
+        #     print('------------------')
+        #
+        # quit()
 
 
-            bullet_points_arr.clear()
-
-            # full_description_html_res remove first element
-            full_description_html_step = full_description_html_res[1:]
-            for elem in full_description_html_step:
-                bullet_points_arr.append(elem)
-            # print(soup)
-            try:
-                related_col_arr = []
-                arr1 = []
-                arr1.append('related_collections')
-                related_col_arr.append(arr1)
-                # related_collections = soup.find('div', class_='product_links').find_all('a')
-                # for related_collection in related_collections:
-                #     # print(related_collection)
-                #     related_collection = related_collection['href']
-                #     handle, collection_handele = self.get_handle_and_collection_handle(related_collection)
-                #     # print(handle)
-                #     related_col_arr.append(handle)
-            except Exception as e:
-                print(e)
-                related_col_arr.append('')
-                print(e)
-                print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
+        try:
+            fill_description_primary = full_description_html_res[0]
+        except Exception as e:
+            # print("--------------------------")
+            # print(full_description_html)
+            fill_description_primary = full_description_html
+            print(e)
+            print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
 
 
-        elif self.domain == 'https://univers-chinois.com':
+        bullet_points_arr.clear()
+
+        # full_description_html_res remove first element
+        full_description_html_step = full_description_html_res[1:]
+        for elem in full_description_html_step:
+            bullet_points_arr.append(elem)
+        # print(soup)
+        try:
+            related_col_arr = []
+            arr1 = []
+            arr1.append('related_collections')
+            related_col_arr.append(arr1)
+            # related_collections = soup.find('div', class_='product_links').find_all('a')
+            # for related_collection in related_collections:
+            #     # print(related_collection)
+            #     related_collection = related_collection['href']
+            #     handle, collection_handele = self.get_handle_and_collection_handle(related_collection)
+            #     # print(handle)
+            #     related_col_arr.append(handle)
+        except Exception as e:
+            print(e)
+            related_col_arr.append('')
+            print(e)
+            print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
+
+
+        if self.domain == 'https://univers-chinois.com':
             related_col_arr = []
             fill_description_primary = ''
             full_description_html = ''
@@ -429,7 +309,7 @@ class ShopifyScrapper:
         return full_description_html_primary
 
     def request_link_by_link(self,link_by_item,proxy_index,s):
-        # link_by_item = "http://web.archive.org/web/20210617082123/https://www.univers-fleuri.com/products/collier-fleur-resine"
+        # link_by_item = "http://web.archive.org/web/20210925030613/https://www.univers-fleuri.com/products/robe-fleurie-courte-pastel"
         # print("request_link_by_link")
 
          # make request
@@ -465,8 +345,7 @@ class ShopifyScrapper:
             if product_data != False:
                 images_arr = []
                 product_data = json.loads(product_data)
-                # print(product_data)
-
+                print(product_data)
 
                 produc_id = product_data['id']
                 product_title = product_data['title']
@@ -525,19 +404,14 @@ class ShopifyScrapper:
                 ceo_description = soup_item.find('meta', {'name': 'description'})['content']
 
                 images = product_data['images']
+
                 for img in images:
                     images_arr.append(img)
 
 
                 title_html = soup_item.find('h1')
 
-                # for div in soup_item.find_all('div', class_='swatch_options'):
-                #     for variant in div.find_all('div', class_='option_title'):
-                #         # if div has text, append to handle_arr
-                #         if len(div.text) > 0:
-                #             variants_arr.append(variant.text)
                 data_value_list = []
-                # if div has data-value, append to data_value_list
 
                 id_by_id = product_data['id']
                 vendor = product_data['vendor']
@@ -588,6 +462,7 @@ class ShopifyScrapper:
                                 variants.append('')
                             else:
                                 variants.append(product['option3'])
+
 
                             self.related_collections_handle_arr.append(product_handle)
                             # print(related_col_arr)
@@ -932,8 +807,11 @@ class ShopifyScrapper:
                                         print(f"fl {fill_link}")
 
                             if self.webarchive == False:
-                                fill_link = domain + link
-                                fill_link = ''
+
+                                if link.find("/products/") != -1 and "/collections/" in link:
+                                    fill_link = domain + link
+                                    print(f"fl {fill_link}")
+                                # fill_link = ''
 
                             if len(fill_link) > 0:
                                 # try:
@@ -961,11 +839,11 @@ class ShopifyScrapper:
                                 # except Exception as e:
                                 #     print(e)
                                 #     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
-                    #         if index == 30:
+                    #         if index == 5:
                     #             break
-                    #     if index == 30:
+                    #     if index == 5:
                     #         break
-                    # if index == 30:
+                    # if index == 5:
                     #     break
 
 
@@ -995,7 +873,9 @@ class ShopifyScrapper:
         soup = bs(response.text, 'html.parser')
         # for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
         # for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
-        for link in soup.find('div', class_='grid-item text-center large--text-right').find_all('a'):
+        #
+        # for link in soup.find('div', class_='grid-item text-center large--text-right').find_all('a'):
+        for link in soup.find('ul', class_='meganav__nav page-width').find_all('a'):
             menu_link = link.get('href')
             if menu_link.find('/collections') != -1:
                 all_categpries.append(menu_link)
@@ -1062,13 +942,15 @@ class ShopifyScrapper:
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.webarchive = True
+    shopify_scrapper.webarchive = False
     shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
 
-    shopify_scrapper.domain = "https://www.univers-fleuri.com"
+    # shopify_scrapper.domain = "https://www.univers-fleuri.com"
+    shopify_scrapper.domain = "https://traditions-de-chine.com"
     shopify_scrapper.create_xls_file()
     all_categpries = shopify_scrapper.get_menu_links()
+    all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
     print(all_categpries)
     shopify_scrapper.scrap_shopify(all_categpries)
     shopify_scrapper.clean_duplicates()
