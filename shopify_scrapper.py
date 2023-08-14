@@ -63,14 +63,14 @@ class ShopifyScrapper:
         self.hanle = ''
 
     def remove_all_none_tags(self,soup):
-        print('remove_all_none_tags')
+        # print('remove_all_none_tags')
         # remove all ul is not None and len(ul.text) > 40
         uls = soup.find_all(['p','h4','ul','ol','table'])
         for ul in uls:
             # print(ul)
             if ul is None or len(ul.text) < 40:
                 ul.decompose()
-        print('remove_all_none_tags END')
+        # print('remove_all_none_tags END')
         return soup
 
     def cut_full_description(self,soup,full_description):
@@ -180,7 +180,7 @@ class ShopifyScrapper:
             # elif str(full_description_html).find('<ul') != -1:
             # cut data inside table
             # get data inside table
-            print(f"Ul pattern")
+            # print(f"Ul pattern")
 
 
 
@@ -203,7 +203,7 @@ class ShopifyScrapper:
             description_status = False
             count_of_tags = len(ul_data)
             tga_index = 0
-            print(f"count_of_tags {count_of_tags}")
+            # print(f"count_of_tags {count_of_tags}")
             not_iquel_status = False
             for ul in ul_data:
                 # get tag name
@@ -219,7 +219,7 @@ class ShopifyScrapper:
                     # print(ul)
                     # print(f"tag_name {tag_name}")
                     if tag_type == tag_name:
-                        print('Iquil')
+                        # print('Iquil')
                         # print(full_description_html_res)
                         # quit()
                         # tag_value += str(ul)
@@ -248,7 +248,7 @@ class ShopifyScrapper:
                             # full_description_html_res.append(tag_value)
 
                     elif tag_type != tag_name:
-                        print(f"Not iquil")
+                        # print(f"Not iquil")
                         # print(tag_type)
                         # print(not_iquel_status)
                         # print(ul)
@@ -318,13 +318,13 @@ class ShopifyScrapper:
 
             # print(f"full_description_html_res {full_description_html_res}")
             try:
-                print('++++++++++++++++++++++++++')
-                print(type(full_description_html_res))
-                print(len(full_description_html_res))
+                # print('++++++++++++++++++++++++++')
+                # print(type(full_description_html_res))
+                # print(len(full_description_html_res))
                 fill_description_primary = full_description_html_res[0]
             except Exception as e:
-                print("--------------------------")
-                print(full_description_html)
+                # print("--------------------------")
+                # print(full_description_html)
                 fill_description_primary = full_description_html
                 print(e)
                 print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
@@ -430,16 +430,16 @@ class ShopifyScrapper:
 
     def request_link_by_link(self,link_by_item,proxy_index,s):
         # link_by_item = "http://web.archive.org/web/20210617082123/https://www.univers-fleuri.com/products/collier-fleur-resine"
-        print("request_link_by_link")
+        # print("request_link_by_link")
 
          # make request
         response_item = self.make_request(link_by_item, proxy_index, s)
-        print('converrt into soup html')
+        # print('converrt into soup html')
 
 
 
         # converrt into soup html
-        print(response_item)
+        # print(response_item)
         if response_item != False and response_item != None:
             soup_item = bs(response_item.text, 'html.parser')
 
@@ -496,7 +496,7 @@ class ShopifyScrapper:
                 related_col_arr.append(r)
 
                 try:
-                    print('a')
+                    # print('a')
                     full_description_html_primary, bullet_points_arr, related_col_arr = self.cut_full_description(soup_item,full_description)
                 except Exception as e:
                     # display a line of error
@@ -599,7 +599,7 @@ class ShopifyScrapper:
                             #     self.handle_arr.append(related_col_arr)
                             hh = []
                             hh.append(product_handle)
-                            print(f"product_handle {product_handle}")
+                            # print(f"product_handle {product_handle}")
                             self.handle_arr.append(hh)
                             self.full_description_arr.append(full_description)
 
@@ -721,8 +721,8 @@ class ShopifyScrapper:
                 sheet.cell(row=next_row, column=2, value=str(self.product_id_arr[i]))
                 sheet.cell(row=next_row, column=3, value=str(self.full_link_arr[i]))
                 sheet.cell(row=next_row, column=4, value=str(self.hanle))
-                sheet.cell(row=next_row, column=5, value=str(self.related_collections_handle_arr[i])) #
-                sheet.cell(row=next_row, column=6, value=str(self.related_collections_handle_arr[i])) # self.related_collections_handle_arr[i])
+                sheet.cell(row=next_row, column=5, value=str(self.hanle)) #
+                sheet.cell(row=next_row, column=6, value=str(self.hanle)) # self.related_collections_handle_arr[i])
                 sheet.cell(row=next_row, column=7, value=str(self.title_arr[i]))
                 sheet.cell(row=next_row, column=8, value=str(self.title_html_arr[i]))
                 sheet.cell(row=next_row, column=9, value=str(self.ceo_title_arr[i]))
@@ -870,10 +870,13 @@ class ShopifyScrapper:
 
 
     def cut_collection_link(self,link):
-        col_p = link.find('/collections/')
-        prod_pos = link.find('/products/')
-        self.hanle = link[col_p+13:]
-        print(self.hanle)
+        if "/collections/" in link:
+            col_p = link.find('/collections/')
+            prod_pos = link.find('/products/')
+            self.hanle = link[col_p+13:]
+            print("====================================")
+            print(self.hanle)
+            print("====================================")
 
     def scrap_shopify(self,all_categpries):
         if self.webarchive == True:
@@ -940,6 +943,7 @@ class ShopifyScrapper:
                                     print("++++++++++++")
                                     print(f'INDEX {index}')
                                     print(f"ID COUNT {len(self.product_counter)}")
+                                    print(f"handle = {self.hanle}")
 
 
                                     # remove duplicates from list
@@ -957,11 +961,11 @@ class ShopifyScrapper:
                                 # except Exception as e:
                                 #     print(e)
                                 #     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
-                    #         if index == 5:
+                    #         if index == 30:
                     #             break
-                    #     if index == 5:
+                    #     if index == 30:
                     #         break
-                    # if index == 5:
+                    # if index == 30:
                     #     break
 
 
@@ -1024,10 +1028,15 @@ class ShopifyScrapper:
                 print(f"Index {indexs}")
                 print(f"ID {ids}")
                 print(f"Duble value {data_arr[index_ids]}")
+                print(f"Handle value {hendler_arr[index_ids]}")
                 print(f"Dublicate index {index_ids}")
                 print("Dublicate")
+                print(f"ORIGIN")
+                print()
                 if str(row[3].value) != str(hendler_arr[index_ids]):
+                    print(f"Related {hendler_arr[index_ids]  +','+ row[3].value}")
                     hendler_arr[index_ids] = hendler_arr[index_ids] + "," + row[3].value
+                    row[4].value = hendler_arr[index_ids] + "," + row[3].value
 
                 # handle = row[3].value
                 # collection_handele = row[4].value
@@ -1039,56 +1048,60 @@ class ShopifyScrapper:
                 hendler_origin_arr.append(str(row[3].value))
             indexs += 1
 
-        for h_index, hend in enumerate(hendler_arr):
-            print(hend)
-            print(data_arr[h_index])
-            print("++++++++++++++")
-            # update data
-            sheet.cell(row=h_index + 1, column=4).value = hendler_origin_arr[h_index]
-            sheet.cell(row=h_index + 1, column=5).value = hend
-            sheet.cell(row=h_index + 1, column=6).value = hend
+        # for h_index, hend in enumerate(hendler_arr):
+        #     # print(hend)
+        #     # print(data_arr[h_index])
+        #     # print("++++++++++++++")
+        #     # update data
+        #     sheet.cell(row=h_index + 1, column=4).value = hendler_origin_arr[h_index]
+        #     sheet.cell(row=h_index + 1, column=5).value = hend
+        #     sheet.cell(row=h_index + 1, column=6).value = hend
 
         wb.save("shopify.xlsx")
         wb.close()
 
         # remove dublicates using pandas
         df = pd.read_excel('shopify.xlsx')
-        df.drop_duplicates(subset=['id'], inplace=True)
+        df.drop_duplicates(subset=['id'], keep='last')
         df.to_excel('shopify.xlsx', index=False)
         print("Done")
 
 
 
-        # rename E0 field to hendler_2
-        wb = load_workbook("shopify.xlsx")
-        sheet = wb.worksheets[0]
-
-        # count products
-        pp_arr = []
-        for row in sheet:
-            p_ids = row[1].value
-            print(p_ids)
-            if ids not in pp_arr:
-                pp_arr.append(p_ids)
-        print(len(pp_arr))
+        # # rename E0 field to hendler_2
+        # wb = load_workbook("shopify.xlsx")
+        # sheet = wb.worksheets[0]
+        # # in end of A write len(pp_arr)
+        # next_row = sheet.max_row + 1
+        # # count products
+        # pp_arr = []
+        # for row in sheet:
+        #     p_ids = row[1].value
+        #     print(p_ids)
+        #     if p_ids not in pp_arr:
+        #         pp_arr.append(p_ids)
+        # print(len(pp_arr))
 
         sheet.cell(row=1, column=5).value = "collection_handele"
         sheet.cell(row=1, column=6).value = "related_collections_handle"
+        # sheet.cell(row=next_row, column=1, value="Product Quantity:" + str(len(pp_arr)))
+
+
         wb.save("shopify.xlsx")
         wb.close()
 
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.webarchive = True
-    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
-    shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-
-    shopify_scrapper.domain = "https://www.univers-fleuri.com"
-    shopify_scrapper.create_xls_file()
-    all_categpries = shopify_scrapper.get_menu_links()
-    print(all_categpries)
-    shopify_scrapper.scrap_shopify(all_categpries)
+    # shopify_scrapper.webarchive = True
+    # shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
+    # shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
+    #
+    # shopify_scrapper.domain = "https://www.univers-fleuri.com"
+    # shopify_scrapper.create_xls_file()
+    # all_categpries = shopify_scrapper.get_menu_links()
+    # print(all_categpries)
+    # shopify_scrapper.scrap_shopify(all_categpries)
     shopify_scrapper.clean_duplicates()
 
     # read shopify.xlsx file
