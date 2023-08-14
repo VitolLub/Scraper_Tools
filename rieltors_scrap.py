@@ -8,7 +8,9 @@ from openpyxl.styles import PatternFill
 from bs4 import BeautifulSoup as bs
 import json
 import csv
+from pynput.keyboard import Key, Controller
 import psycopg2
+import time
 
 
 class Rieltors:
@@ -414,8 +416,9 @@ class Rieltors:
     def select_all_data_from_data_collection(self):
         connection = self.postgres_connect()
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM data_collections_data_collections")
+        cursor.execute("SELECT * FROM data_collections_data_collections LIMIT 10")
         rows = cursor.fetchall()
+        # print(rows)
         return rows
 
     def insert_data_on(self,email, phone, name, state, city, zip_code, address):
@@ -426,17 +429,186 @@ class Rieltors:
         connection.commit()
         print("Record inserted successfully into data_collections_data_collections table")
 
+    def remvoe_duplicate(self):
+        connection = self.postgres_connect()
+        cursor = connection.cursor()
+        # select lasr 10 records
+        cursor.execute("SELECT * FROM data_collections_data_collections ORDER BY id DESC")
+        rows = cursor.fetchall()
+        print(rows)
+        for row in rows:
+            name = row[3]
+            state = row[4]
+            city = row[5]
+            zip_code = row[6]
+            # select all records with same name, state, city
+            cursor.execute("SELECT * FROM data_collections_data_collections WHERE name = %s AND state = %s AND city = %s AND zip_code = %s", (name, state, city,zip_code))
+            rows = cursor.fetchall()
+            # print(rows)
+            # len rows
+            print(len(rows))
+            # loop from 1 element, not 0
+            if len(rows):
+                for i in range(1,len(rows)):
+                    print(rows[i][0])
+                    # delete all duplicates
+                    cursor.execute("DELETE FROM data_collections_data_collections WHERE id = %s", (rows[i][0],))
+                    connection.commit()
+            # quit()
+
+            #
+            # cursor.execute("DELETE FROM data_collections_data_collections a USING data_collections_data_collections b WHERE a.ctid < b.ctid AND a.email = b.email;")
+            # connection.commit()
+        # print("Duplicate removed")
+
+    def pape_per_page(self,page,i):
+        print('pape_per_page')
+        print(f"I step = {i}")
+        # try:
+            # div.FindAgentRoute__row:nth-child(1)
+            # find div class AgentCard__text AgentCard__row 1
+
+        # company = page.inner_text("div.FindAgentRoute__row:nth-child(" + i + ")", timeout=8000)
+        # # get only text
+        # print(f"company = {company}")
+        # company = company
+
+
+        # click in new tab
+        try:
+            page.click("div.FindAgentRoute__row:nth-child(" + str(i) + ")", timeout=8000)
+        except:
+            # evalute js
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            # just wait
+            time.sleep(10)
+            self.pape_per_page(page, i)
+        try:
+            acgent_name = page.inner_text("div.AgentContent__name",timeout=1000)
+        except:
+            acgent_name = ''
+        try:
+            agent_location = page.inner_text("div.AgentContent__location",timeout=1000)
+            location = agent_location.split(",")
+        except:
+            location = ''
+        try:
+            email = page.inner_text("a.AgentInformation__factBody",timeout=1000)
+        except:
+            email = ''
+
+        try:
+            phones = page.inner_text("div.AgentInformation__phoneNumbers",timeout=1000)
+        except:
+            phones = ''
+
+        try:
+            soup = bs(page.content(), 'html.parser')
+            # print(soup)
+            language = soup.find(text="Market Center")
+            # get parent tag of language
+            language = language.parent
+            # get parent tag of language
+            language = language.parent
+            company = language.text
+            company = company.replace("Market Center", "")
+        # print(compant)
+        # quit()
+        # #
+        except:
+            company = ''
+
+
+        print(acgent_name)
+        print(location)
+        print(email)
+        print(phones)
+        print(company)
+        print("====================================="
+              )
+        self.insert_data_on(email, phones, acgent_name, location[1], location[0], '', company)
+        # click back
+        kb = Controller()
+        # press alt + left together
+        kb.press(Key.alt)  # Presses "up" key
+        kb.press(Key.left)  # Presses "left" key
+        kb.release(Key.alt)  # Releases "up" key
+        kb.release(Key.left)  # etc..
+        print('back')
+
+
+    def zillow_requst(self):
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=False)
+            page = browser.new_page()
+            go_index = False
+            for go_to_link in self.cities_array:
+                print(go_to_link)
+                city = go_to_link.upper()
+                if city == 'Vero Beach South':
+                    go_index = True
+                if go_index == True:
+                    try:
+                        # city = go_to_link[1].lower()
+                        # print(city)
+                        # state = go_to_link[0].lower()
+                        # print(state)
+                        url = f"https://www.kw.com/agent/search/FL/"+city+"/"
+
+                        page.goto(url)
+                        page.wait_for_load_state()
+                        total_count = page.inner_text("div.FindAgentRoute__totalCount")
+
+                        only_digits = [digit for digit in total_count if digit.isdigit()]
+                        only_digits = "".join(only_digits)
+                        print(only_digits)
+                        # find div with attr
+                        # CLICK on div.FindAgentRoute__row with index 1
+                        for i in range(1, 50):
+                            print(f" I = {i}")
+                            try:
+                                self.pape_per_page(page,i)
+                            except:
+                                # page.goto(url)
+                                # time.sleep(10)
+                                pass
+                    except Exception as e:
+                        print(e)
+                # quit()
+
+                # page.wait_for_timeout(100000)
+
+        # response = requests.get("https://www.realtor.com/realestateagents/56bbecba7e54f7010021baa7",timeout=10)
+        #
+        # print(response.text)
+    def read_csv_file2(self):
+        self.cities_array = []
+        # read csv file uscities.csv line by line
+        with open('uscities.csv', newline='') as csvfile:
+            # get state_name
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                if row['state_name'] == 'Florida':
+                    # print(row['city'], row['state_name'])
+                    self.cities_array.append(row['city'])
+            # quit()
 if __name__ == "__main__":
     rieltors = Rieltors()
-    rieltors.read_csv_file()
-    rieltors.create_file()
-    rieltors.domain = "https://www.kw.com/search/location/ChIJY10Hv_i02YgRjdzvoWOVM6w-0.7420868142967443,Florida%2C%20Miami%2C%2033109,Miami%20Beach%2C%20FL%2033109%2C%20USA?fallBackCityAndState=Miami%20Beach%2C%20FL&fallBackPosition=25.7560139%2C%20-80.1344842&fallBackStreet=&isFallback=true&viewport=25.872362435965854%2C-80.1049454695791%2C25.826943802010476%2C-80.15103654929102&zoom=14"
-    rieltors.goto()
-    # # rieltors.generate_link()
-    # print(rieltors.insert_data_on())
-    # print(rieltors.select_all_data_from_data_collection())
+    # rieltors.read_csv_file()
+    # rieltors.create_file()
+    # rieltors.domain = "https://www.kw.com/search/location/ChIJY10Hv_i02YgRjdzvoWOVM6w-0.7420868142967443,Florida%2C%20Miami%2C%2033109,Miami%20Beach%2C%20FL%2033109%2C%20USA?fallBackCityAndState=Miami%20Beach%2C%20FL&fallBackPosition=25.7560139%2C%20-80.1344842&fallBackStreet=&isFallback=true&viewport=25.872362435965854%2C-80.1049454695791%2C25.826943802010476%2C-80.15103654929102&zoom=14"
+    # rieltors.goto()
+    #
+    # rieltors.remvoe_duplicate()
 
-    # connect status
+    rieltors.read_csv_file2()
+    # rieltors.read_csv_file()
+    rieltors.zillow_requst()
+
+    # rieltors.select_all_data_from_data_collection()
+
+
+
 
 
 
