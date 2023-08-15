@@ -55,6 +55,7 @@ class ShopifyScrapper:
         self.compare_at_price_max_arr = []
         self.price_min_arr = []
         self.price_max_arr = []
+        self.product_hendler = []
 
         # full decsription arr
         self.total_description_html_arr = []
@@ -137,10 +138,11 @@ class ShopifyScrapper:
         description_status = False
         count_of_tags = len(ul_data)
         tga_index = 0
-        # print(f"count_of_tags {count_of_tags}")
+        print(f"count_of_tags {count_of_tags}")
         not_iquel_status = False
         for ul in ul_data:
-
+            print(ul.name)
+            print(ul)
 
             if ul is not None and len(ul.text) > 40:
 
@@ -149,8 +151,8 @@ class ShopifyScrapper:
                     tag_type = tag_name
 
                 if tag_type == tag_name:
-                    # print('Iquil')
-                    # print(full_description_html_res)
+                    print('Iquil')
+                    print(tag_value)
                     # quit()
                     # tag_value += str(ul)
                     if tag_value.find(str(ul)) == -1:
@@ -171,6 +173,9 @@ class ShopifyScrapper:
 
 
                 elif tag_type != tag_name:
+                    print('Not Iquil')
+                    print(ul)
+                    print(tag_type)
                     if tag_type == 'h4' and description_status == False or tag_type == 'p' and description_status == False:
                         full_description_html_res.insert(0, str(tag_value))
                         description_status = True
@@ -182,7 +187,18 @@ class ShopifyScrapper:
                     # tag_value = ''
                     tag_value = str(ul)
 
+                    if ul_index == len(ul_data) - 1:
+                        # print(f"Last index")
+                        # print(tag_type)
+                        # print(f"description_status {description_status}")
+                        if tag_type == 'h4' and description_status == False or tag_type == 'p' and description_status == False:
+                            full_description_html_res.insert(0, str(tag_value))
+                            description_status = True
+                        else:
+                            full_description_html_res.append(tag_value)
+
             ul_index += 1
+
         # print('===============================')
         # print('full_description_html_res')
         # print(len(full_description_html_res))
@@ -309,7 +325,7 @@ class ShopifyScrapper:
         return full_description_html_primary
 
     def request_link_by_link(self,link_by_item,proxy_index,s):
-        # link_by_item = "http://web.archive.org/web/20210925030613/https://www.univers-fleuri.com/products/robe-fleurie-courte-pastel"
+        # link_by_item = "https://traditions-de-chine.com/collections/bols-chinois/products/bol-chinois-noir"
         # print("request_link_by_link")
 
          # make request
@@ -345,7 +361,7 @@ class ShopifyScrapper:
             if product_data != False:
                 images_arr = []
                 product_data = json.loads(product_data)
-                print(product_data)
+                # print(product_data)
 
                 produc_id = product_data['id']
                 product_title = product_data['title']
@@ -424,6 +440,7 @@ class ShopifyScrapper:
                             secure_url = ''
                             self.dublicate.append(product['id'])
 
+                            self.product_hendler.append(product_handle)
                             self.id_by_id_arr.append(product['id'])
                             self.product_name_arr.append(product_title)
                             self.total_description_html_arr.append(str(self.remove_all_css_style(total_description_html_arr)))
@@ -591,52 +608,52 @@ class ShopifyScrapper:
 
             # Step 4: Append the data to the selected worksheet
             # print(self.handle_arr[i])
-            try:
-                sheet.cell(row=next_row, column=1, value=str(self.id_by_id_arr[i]))
-                sheet.cell(row=next_row, column=2, value=str(self.product_id_arr[i]))
-                sheet.cell(row=next_row, column=3, value=str(self.full_link_arr[i]))
-                sheet.cell(row=next_row, column=4, value=str(self.hanle))
-                sheet.cell(row=next_row, column=5, value=str(self.hanle)) #
-                sheet.cell(row=next_row, column=6, value=str(self.hanle)) # self.related_collections_handle_arr[i])
-                sheet.cell(row=next_row, column=7, value=str(self.title_arr[i]))
-                sheet.cell(row=next_row, column=8, value=str(self.title_html_arr[i]))
-                sheet.cell(row=next_row, column=9, value=str(self.ceo_title_arr[i]))
-                sheet.cell(row=next_row, column=10, value=str(self.ceo_description_arr[i]))
-                sheet.cell(row=next_row, column=11, value=str(self.product_name_arr[i]))
-                sheet.cell(row=next_row, column=12, value=str(self.full_description_arr[i]))
-                sheet.cell(row=next_row, column=13, value=str(self.total_description_html_arr[i])).fill = PatternFill(start_color='ADFF2F', end_color='ADFF2F', fill_type='solid')
-                sheet.cell(row=next_row, column=14, value=str(self.h2_html_arr[i])).fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
-                sheet.cell(row=next_row, column=15, value=str(self.clean_description_html_arr[i])).fill = PatternFill(start_color='B0E0E6', end_color='B0E0E6', fill_type='solid')
-                sheet.cell(row=next_row, column=16, value=str(bullet_points_variant1)).fill = PatternFill(start_color='CD853F', end_color='CD853F', fill_type='solid')
-                sheet.cell(row=next_row, column=17, value=str(bullet_points_variant2)).fill = PatternFill(start_color='FFEBCD', end_color='FFEBCD', fill_type='solid')
-                sheet.cell(row=next_row, column=18, value=str(bullet_points_variant3)).fill = PatternFill(start_color='FF7F50', end_color='FF7F50', fill_type='solid')
-                sheet.cell(row=next_row, column=19, value=str(self.published_at[i]))
-                sheet.cell(row=next_row, column=20, value=str(self.created_at[i]))
-                sheet.cell(row=next_row, column=21, value=str(self.vendor_arr[i]))
-                sheet.cell(row=next_row, column=22, value=str(self.type_arr[i]))
-                sheet.cell(row=next_row, column=23, value=str(self.tags_arr[i]))
-                sheet.cell(row=next_row, column=24, value=str(self.price_arr[i]))
-                sheet.cell(row=next_row, column=25, value=str(self.price_min_arr[i]))
-                sheet.cell(row=next_row, column=26, value=str(self.price_max_arr[i]))
-                sheet.cell(row=next_row, column=27, value=str(self.available_arr[i]))
-                sheet.cell(row=next_row, column=28, value=str(self.price_varies_arr[i]))
-                sheet.cell(row=next_row, column=29, value=str(self.compare_at_price_arr[i]))
-                sheet.cell(row=next_row, column=30, value=str(self.compare_at_price_max_arr[i]))
-                sheet.cell(row=next_row, column=31, value=str(self.compare_at_price_varies_arr[i]))
-                sheet.cell(row=next_row, column=32, value=str(''))
-                sheet.cell(row=next_row, column=33, value=str(''))
-                sheet.cell(row=next_row, column=34, value=str(self.remove_webarchive_from_img(self.images_arr[i])))
-                sheet.cell(row=next_row, column=35, value=str(self.remove_webarchive_from_img(self.imge_primary_arr[i])))
-                sheet.cell(row=next_row, column=36, value=str(self.variants_arr[i]))
-                sheet.cell(row=next_row, column=37, value=str(option1))
-                sheet.cell(row=next_row, column=38, value=str(option2))
-                sheet.cell(row=next_row, column=39, value=str(option3))
-                sheet.cell(row=next_row, column=40, value=str(self.remove_webarchive_from_img(self.secure_url_arr[i])))
-                sheet.cell(row=next_row, column=41, value=str(''))
-                sheet.cell(row=next_row, column=42, value=str(self.price_arr[i]))
-                next_row += 1
-            except:
-                pass
+            # try:
+            sheet.cell(row=next_row, column=1, value=str(self.id_by_id_arr[i]))
+            sheet.cell(row=next_row, column=2, value=str(self.product_id_arr[i]))
+            sheet.cell(row=next_row, column=3, value=str(self.full_link_arr[i]))
+            sheet.cell(row=next_row, column=4, value=str(self.product_hendler[i]))
+            sheet.cell(row=next_row, column=5, value=str(self.hanle)) #
+            sheet.cell(row=next_row, column=6, value=str(self.hanle)) # self.related_collections_handle_arr[i])
+            sheet.cell(row=next_row, column=7, value=str(self.title_arr[i]))
+            sheet.cell(row=next_row, column=8, value=str(self.title_html_arr[i]))
+            sheet.cell(row=next_row, column=9, value=str(self.ceo_title_arr[i]))
+            sheet.cell(row=next_row, column=10, value=str(self.ceo_description_arr[i]))
+            sheet.cell(row=next_row, column=11, value=str(self.product_name_arr[i]))
+            sheet.cell(row=next_row, column=12, value=str(self.full_description_arr[i]))
+            sheet.cell(row=next_row, column=13, value=str(self.total_description_html_arr[i])).fill = PatternFill(start_color='ADFF2F', end_color='ADFF2F', fill_type='solid')
+            sheet.cell(row=next_row, column=14, value=str(self.h2_html_arr[i])).fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+            sheet.cell(row=next_row, column=15, value=str(self.clean_description_html_arr[i])).fill = PatternFill(start_color='B0E0E6', end_color='B0E0E6', fill_type='solid')
+            sheet.cell(row=next_row, column=16, value=str(bullet_points_variant1)).fill = PatternFill(start_color='CD853F', end_color='CD853F', fill_type='solid')
+            sheet.cell(row=next_row, column=17, value=str(bullet_points_variant2)).fill = PatternFill(start_color='FFEBCD', end_color='FFEBCD', fill_type='solid')
+            sheet.cell(row=next_row, column=18, value=str(bullet_points_variant3)).fill = PatternFill(start_color='FF7F50', end_color='FF7F50', fill_type='solid')
+            sheet.cell(row=next_row, column=19, value=str(self.published_at[i]))
+            sheet.cell(row=next_row, column=20, value=str(self.created_at[i]))
+            sheet.cell(row=next_row, column=21, value=str(self.vendor_arr[i]))
+            sheet.cell(row=next_row, column=22, value=str(self.type_arr[i]))
+            sheet.cell(row=next_row, column=23, value=str(self.tags_arr[i]))
+            sheet.cell(row=next_row, column=24, value=str(self.price_arr[i]))
+            sheet.cell(row=next_row, column=25, value=str(self.price_min_arr[i]))
+            sheet.cell(row=next_row, column=26, value=str(self.price_max_arr[i]))
+            sheet.cell(row=next_row, column=27, value=str(self.available_arr[i]))
+            sheet.cell(row=next_row, column=28, value=str(self.price_varies_arr[i]))
+            sheet.cell(row=next_row, column=29, value=str(self.compare_at_price_arr[i]))
+            sheet.cell(row=next_row, column=30, value=str(self.compare_at_price_max_arr[i]))
+            sheet.cell(row=next_row, column=31, value=str(self.compare_at_price_varies_arr[i]))
+            sheet.cell(row=next_row, column=32, value=str(''))
+            sheet.cell(row=next_row, column=33, value=str(''))
+            sheet.cell(row=next_row, column=34, value=str(self.remove_webarchive_from_img(self.images_arr[i])))
+            sheet.cell(row=next_row, column=35, value=str(self.remove_webarchive_from_img(self.imge_primary_arr[i])))
+            sheet.cell(row=next_row, column=36, value=str(self.variants_arr[i]))
+            sheet.cell(row=next_row, column=37, value=str(option1))
+            sheet.cell(row=next_row, column=38, value=str(option2))
+            sheet.cell(row=next_row, column=39, value=str(option3))
+            sheet.cell(row=next_row, column=40, value=str(self.remove_webarchive_from_img(self.secure_url_arr[i])))
+            sheet.cell(row=next_row, column=41, value=str(''))
+            sheet.cell(row=next_row, column=42, value=str(self.price_arr[i]))
+            next_row += 1
+            # except:
+            #     pass
 
 
         # Step 5: Save the changes back to the XLSX file
@@ -654,6 +671,7 @@ class ShopifyScrapper:
                 value.clear()
 
     def remove_webarchive_from_img(self, img):
+        img_arr = []
         if img != '':
             if self.webarchive == True:
                 img_arr = img.split(',')
@@ -661,7 +679,14 @@ class ShopifyScrapper:
                     end_pos = im.find('https://cdn')
                     img_arr[i] = im[end_pos:]
 
-            return ",".join(img_arr)
+                return ",".join(img_arr)
+            elif self.webarchive == False:
+                img_arr = img.split(',')
+                for i, im in enumerate(img_arr):
+                    if im.find('https:') == -1:
+                        img_arr[i] = 'https:' + im
+
+                return ",".join(img_arr)
         else:
             return img
 
@@ -874,8 +899,8 @@ class ShopifyScrapper:
         # for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
         # for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
         #
-        # for link in soup.find('div', class_='grid-item text-center large--text-right').find_all('a'):
-        for link in soup.find('ul', class_='meganav__nav page-width').find_all('a'):
+        for link in soup.find('div', class_='grid-item text-center large--text-right').find_all('a'):
+        # for link in soup.find('ul', class_='meganav__nav page-width').find_all('a'):
             menu_link = link.get('href')
             if menu_link.find('/collections') != -1:
                 all_categpries.append(menu_link)
@@ -913,20 +938,20 @@ class ShopifyScrapper:
                 print("Dublicate")
                 print(f"ORIGIN")
                 print()
-                if str(row[3].value) != str(hendler_arr[index_ids]):
-                    print(f"Related {hendler_arr[index_ids]  +','+ row[3].value}")
-                    row[4].value = row[4].value.replace(hendler_arr[index_ids],"")
+                if str(row[4].value) != str(hendler_arr[index_ids]):
+                    print(f"Related {hendler_arr[index_ids]  +','+ row[4].value}")
+                    row[5].value = row[5].value.replace(hendler_arr[index_ids],"")
 
-                    full_collection = hendler_arr[index_ids] + "," + row[3].value
+                    full_collection = hendler_arr[index_ids] + "," + row[4].value
 
-                    row[4].value = full_collection
-                    print(f"Real data {row[4].value}")
+                    row[5].value = full_collection
+                    print(f"Real data {row[5].value}")
 
                 remove_indexs_arr.append(ids)
             else:
                 data_arr.append(str(ids))
-                hendler_arr.append(str(row[3].value))
-                hendler_origin_arr.append(str(row[3].value))
+                hendler_arr.append(str(row[4].value))
+                hendler_origin_arr.append(str(row[4].value))
             indexs += 1
 
 
@@ -939,6 +964,22 @@ class ShopifyScrapper:
         df.to_excel('shopify.xlsx', index=False)
         print("Done")
 
+        # in end of A column add product counter
+        wb = load_workbook("shopify.xlsx")
+        sheet = wb.worksheets[0]
+
+        # Iterate over the rows in the sheet
+        indexs = 0
+        products_arr = []
+        for row in sheet:
+            ids = row[1].value
+            if ids not in products_arr:
+                products_arr.append(ids)
+            indexs += 1
+
+        sheet['A'+str(indexs+1)] = f"Products count {len(products_arr)}"
+        wb.save("shopify.xlsx")
+        wb.close()
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
@@ -949,11 +990,20 @@ if __name__ == "__main__":
     # shopify_scrapper.domain = "https://www.univers-fleuri.com"
     shopify_scrapper.domain = "https://traditions-de-chine.com"
     shopify_scrapper.create_xls_file()
-    all_categpries = shopify_scrapper.get_menu_links()
+    # all_categpries = shopify_scrapper.get_menu_links()
     all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
     print(all_categpries)
     shopify_scrapper.scrap_shopify(all_categpries)
     shopify_scrapper.clean_duplicates()
+
+
+    """
+    autour-du-the.com
+    boutique-du-tigre.fr
+    horloge-design.com
+    
+
+    """
 
 
 
