@@ -6,6 +6,7 @@ from openpyxl.styles import PatternFill
 import json
 import sys
 import pandas as pd
+from playwright.sync_api import sync_playwright
 import random
 
 class ShopifyScrapper:
@@ -62,6 +63,19 @@ class ShopifyScrapper:
         self.clean_description_html_arr = []
 
         self.hanle = ''
+
+
+        self.blog_links = []
+        self.blog_hendle = []
+        self.blog_next_pages = []
+        self.blog_ceo_title = []
+        self.blog_categories = []
+        self.blog_ceo_desc = []
+        self.blog_title_text = []
+        self.blog_title_html = []
+        self.blog_desc_text = []
+        self.blog_desc_html = []
+        self.blog_feature_image = []
 
     def remove_all_none_tags(self,soup):
         # print('remove_all_none_tags')
@@ -608,52 +622,52 @@ class ShopifyScrapper:
 
             # Step 4: Append the data to the selected worksheet
             # print(self.handle_arr[i])
-            # try:
-            sheet.cell(row=next_row, column=1, value=str(self.id_by_id_arr[i]))
-            sheet.cell(row=next_row, column=2, value=str(self.product_id_arr[i]))
-            sheet.cell(row=next_row, column=3, value=str(self.full_link_arr[i]))
-            sheet.cell(row=next_row, column=4, value=str(self.product_hendler[i]))
-            sheet.cell(row=next_row, column=5, value=str(self.hanle)) #
-            sheet.cell(row=next_row, column=6, value=str(self.hanle)) # self.related_collections_handle_arr[i])
-            sheet.cell(row=next_row, column=7, value=str(self.title_arr[i]))
-            sheet.cell(row=next_row, column=8, value=str(self.title_html_arr[i]))
-            sheet.cell(row=next_row, column=9, value=str(self.ceo_title_arr[i]))
-            sheet.cell(row=next_row, column=10, value=str(self.ceo_description_arr[i]))
-            sheet.cell(row=next_row, column=11, value=str(self.product_name_arr[i]))
-            sheet.cell(row=next_row, column=12, value=str(self.full_description_arr[i]))
-            sheet.cell(row=next_row, column=13, value=str(self.total_description_html_arr[i])).fill = PatternFill(start_color='ADFF2F', end_color='ADFF2F', fill_type='solid')
-            sheet.cell(row=next_row, column=14, value=str(self.h2_html_arr[i])).fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
-            sheet.cell(row=next_row, column=15, value=str(self.clean_description_html_arr[i])).fill = PatternFill(start_color='B0E0E6', end_color='B0E0E6', fill_type='solid')
-            sheet.cell(row=next_row, column=16, value=str(bullet_points_variant1)).fill = PatternFill(start_color='CD853F', end_color='CD853F', fill_type='solid')
-            sheet.cell(row=next_row, column=17, value=str(bullet_points_variant2)).fill = PatternFill(start_color='FFEBCD', end_color='FFEBCD', fill_type='solid')
-            sheet.cell(row=next_row, column=18, value=str(bullet_points_variant3)).fill = PatternFill(start_color='FF7F50', end_color='FF7F50', fill_type='solid')
-            sheet.cell(row=next_row, column=19, value=str(self.published_at[i]))
-            sheet.cell(row=next_row, column=20, value=str(self.created_at[i]))
-            sheet.cell(row=next_row, column=21, value=str(self.vendor_arr[i]))
-            sheet.cell(row=next_row, column=22, value=str(self.type_arr[i]))
-            sheet.cell(row=next_row, column=23, value=str(self.tags_arr[i]))
-            sheet.cell(row=next_row, column=24, value=str(self.price_arr[i]))
-            sheet.cell(row=next_row, column=25, value=str(self.price_min_arr[i]))
-            sheet.cell(row=next_row, column=26, value=str(self.price_max_arr[i]))
-            sheet.cell(row=next_row, column=27, value=str(self.available_arr[i]))
-            sheet.cell(row=next_row, column=28, value=str(self.price_varies_arr[i]))
-            sheet.cell(row=next_row, column=29, value=str(self.compare_at_price_arr[i]))
-            sheet.cell(row=next_row, column=30, value=str(self.compare_at_price_max_arr[i]))
-            sheet.cell(row=next_row, column=31, value=str(self.compare_at_price_varies_arr[i]))
-            sheet.cell(row=next_row, column=32, value=str(''))
-            sheet.cell(row=next_row, column=33, value=str(''))
-            sheet.cell(row=next_row, column=34, value=str(self.remove_webarchive_from_img(self.images_arr[i])))
-            sheet.cell(row=next_row, column=35, value=str(self.remove_webarchive_from_img(self.imge_primary_arr[i])))
-            sheet.cell(row=next_row, column=36, value=str(self.variants_arr[i]))
-            sheet.cell(row=next_row, column=37, value=str(option1))
-            sheet.cell(row=next_row, column=38, value=str(option2))
-            sheet.cell(row=next_row, column=39, value=str(option3))
-            sheet.cell(row=next_row, column=40, value=str(self.remove_webarchive_from_img(self.secure_url_arr[i])))
-            sheet.cell(row=next_row, column=41, value=str(''))
-            sheet.cell(row=next_row, column=42, value=str(self.price_arr[i]))
-            next_row += 1
-            # except:
-            #     pass
+            try:
+                sheet.cell(row=next_row, column=1, value=str(self.id_by_id_arr[i]))
+                sheet.cell(row=next_row, column=2, value=str(self.product_id_arr[i]))
+                sheet.cell(row=next_row, column=3, value=str(self.full_link_arr[i]))
+                sheet.cell(row=next_row, column=4, value=str(self.product_hendler[i]))
+                sheet.cell(row=next_row, column=5, value=str(self.hanle)) #
+                sheet.cell(row=next_row, column=6, value=str(self.hanle)) # self.related_collections_handle_arr[i])
+                sheet.cell(row=next_row, column=7, value=str(self.title_arr[i]))
+                sheet.cell(row=next_row, column=8, value=str(self.title_html_arr[i]))
+                sheet.cell(row=next_row, column=9, value=str(self.ceo_title_arr[i]))
+                sheet.cell(row=next_row, column=10, value=str(self.ceo_description_arr[i]))
+                sheet.cell(row=next_row, column=11, value=str(self.product_name_arr[i]))
+                sheet.cell(row=next_row, column=12, value=str(self.full_description_arr[i]))
+                sheet.cell(row=next_row, column=13, value=str(self.total_description_html_arr[i])).fill = PatternFill(start_color='ADFF2F', end_color='ADFF2F', fill_type='solid')
+                sheet.cell(row=next_row, column=14, value=str(self.h2_html_arr[i])).fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+                sheet.cell(row=next_row, column=15, value=str(self.clean_description_html_arr[i])).fill = PatternFill(start_color='B0E0E6', end_color='B0E0E6', fill_type='solid')
+                sheet.cell(row=next_row, column=16, value=str(bullet_points_variant1)).fill = PatternFill(start_color='CD853F', end_color='CD853F', fill_type='solid')
+                sheet.cell(row=next_row, column=17, value=str(bullet_points_variant2)).fill = PatternFill(start_color='FFEBCD', end_color='FFEBCD', fill_type='solid')
+                sheet.cell(row=next_row, column=18, value=str(bullet_points_variant3)).fill = PatternFill(start_color='FF7F50', end_color='FF7F50', fill_type='solid')
+                sheet.cell(row=next_row, column=19, value=str(self.published_at[i]))
+                sheet.cell(row=next_row, column=20, value=str(self.created_at[i]))
+                sheet.cell(row=next_row, column=21, value=str(self.vendor_arr[i]))
+                sheet.cell(row=next_row, column=22, value=str(self.type_arr[i]))
+                sheet.cell(row=next_row, column=23, value=str(self.tags_arr[i]))
+                sheet.cell(row=next_row, column=24, value=str(self.price_arr[i]))
+                sheet.cell(row=next_row, column=25, value=str(self.price_min_arr[i]))
+                sheet.cell(row=next_row, column=26, value=str(self.price_max_arr[i]))
+                sheet.cell(row=next_row, column=27, value=str(self.available_arr[i]))
+                sheet.cell(row=next_row, column=28, value=str(self.price_varies_arr[i]))
+                sheet.cell(row=next_row, column=29, value=str(self.compare_at_price_arr[i]))
+                sheet.cell(row=next_row, column=30, value=str(self.compare_at_price_max_arr[i]))
+                sheet.cell(row=next_row, column=31, value=str(self.compare_at_price_varies_arr[i]))
+                sheet.cell(row=next_row, column=32, value=str(''))
+                sheet.cell(row=next_row, column=33, value=str(''))
+                sheet.cell(row=next_row, column=34, value=str(self.remove_webarchive_from_img(self.images_arr[i])))
+                sheet.cell(row=next_row, column=35, value=str(self.remove_webarchive_from_img(self.imge_primary_arr[i])))
+                sheet.cell(row=next_row, column=36, value=str(self.variants_arr[i]))
+                sheet.cell(row=next_row, column=37, value=str(option1))
+                sheet.cell(row=next_row, column=38, value=str(option2))
+                sheet.cell(row=next_row, column=39, value=str(option3))
+                sheet.cell(row=next_row, column=40, value=str(self.remove_webarchive_from_img(self.secure_url_arr[i])))
+                sheet.cell(row=next_row, column=41, value=str(''))
+                sheet.cell(row=next_row, column=42, value=str(self.price_arr[i]))
+                next_row += 1
+            except:
+                pass
 
 
         # Step 5: Save the changes back to the XLSX file
@@ -981,20 +995,262 @@ class ShopifyScrapper:
         wb.save("shopify.xlsx")
         wb.close()
 
+    def get_all_blog_posts(self,full_blog_link):
+        print(f"full_blog_link {full_blog_link}")
+        print(f"self.blog_links. {len(self.blog_links)}")
+        respo = requests.get(full_blog_link, timeout=60)
+        soup = bs(respo.text, 'html.parser')
+
+        blog_links = soup.find_all(['a'])
+        for link in blog_links:
+            link = link.get('href')
+            if link != None and link.find('blogs') != -1:
+                slesh_len = link.count('/')
+                if link.find('?page') != -1 and self.domain + link not in self.blog_next_pages:
+                    self.blog_next_pages.append(self.domain + link)
+                if slesh_len > 2:
+                    self.blog_links.append(link)
+
+    def get_blog_content(self):
+        # make request to blog
+        url = self.domain + "/blogs"
+
+        response = requests.get(url,timeout=60)
+        soup = bs(response.text, 'html.parser')
+        # print(soup)
+
+        # find all links
+        links = soup.find_all('a')
+        blog_link = ''
+        for link in links:
+            # print(link)
+            link = link.get('href')
+            # print(link)
+            if link != None and link.find('blog') != -1:
+                blog_link = link
+
+        # get all blogs
+        if self.webarchive == True:
+            full_blog_link = self.webarchive_url + self.domain + blog_link
+        elif self.webarchive == False:
+            full_blog_link = self.domain + blog_link
+
+
+
+        # get all blog posts
+        self.get_all_blog_posts(full_blog_link)
+
+        for page in self.blog_next_pages:
+            self.get_all_blog_posts(page)
+
+        # get all blog links
+        print(self.blog_next_pages)
+        print(self.blog_links)
+        print(len(self.blog_links))
+
+
+        # get all blogs data
+        requests_stat = False
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=False)
+            page = browser.new_page()
+
+            for link in self.blog_links:
+                page.goto(self.domain+link, timeout=100000)
+
+                # get html content
+                html = page.content()
+
+                # make soup
+                soup = bs(html, 'html.parser')
+
+                handle_pos = link.find('/blogs/')
+                if handle_pos != -1:
+                    handle = link[handle_pos+7:]
+                    print(handle)
+                    self.blog_hendle.append(handle)
+
+                # get og:title
+                try:
+                    og_title = soup.find('meta', property='og:title')['content']
+                    print(og_title)
+                    self.blog_title_text.append(og_title)
+                except:
+                    self.blog_title_text.append('')
+
+                # get og:description
+                try:
+                    ceo_desc = soup.find('meta', property='og:description')['content']
+                    print(ceo_desc)
+                    self.blog_desc_text.append(ceo_desc)
+                except:
+                    self.blog_desc_text.append('')
+
+                try:
+                    # get title tag
+                    ceo_title = soup.find('title').text
+                    print(ceo_title)
+                    self.blog_ceo_title.append(ceo_title)
+                except:
+                    self.blog_ceo_title.append('')
+
+
+                try:
+                    # get title tag html
+                    # find h1
+                    title_html = soup.find('h1')
+                    title_text = title_html.text
+                    print(str(title_html))
+                    print(title_text)
+                    self.blog_title_html.append(str(title_html))
+                except:
+                    title_text = ''
+
+                try:
+                    desc_html = soup.find('main')
+                    tags = desc_html.find_all(['p','h2'])
+                    desc_html_full = ''
+                    desc_text_full = ''
+                    desc_index = 0
+                    for tag in tags:
+                        # print(f"len(tags) {len(tags)} desc_index {desc_index}")
+                        if desc_index > 2 and desc_index < len(tags)-6:
+                            # print(tag)
+                            desc_html_full += str(tag)
+                            desc_text_full += tag.text
+                        desc_index += 1
+                    # get all tags inside main
+                    # desc_text = desc_html_full.text
+                except:
+                    print(f"Error desc_html_full ")
+                    desc_html_full = ''
+                    desc_text_full = ''
+
+                try:
+                    print(f"handle {handle}")
+                    r_find = handle.rfind('/')
+                    Categories = handle[:r_find]
+                except:
+                    Categories = ''
+
+
+
+                # get featured image
+                feature_image = self.feature_images(soup)
+                print(feature_image)
+                self.blog_feature_image.append(feature_image)
+                # Categories = ''
+                # desc_text = ''
+                # desc_html = ''
+                self.save_blog_data_to_xlsx(self.domain+link,handle,ceo_title,Categories,ceo_desc,title_text,title_html,desc_text_full,desc_html_full,feature_image)
+                break
+
+
+
+                    # get all blog content
+        # self.blog_links = []
+        # self.blog_hendle = []
+        # self.blog_next_pages = []
+        # self.blog_ceo_title = []
+        # self.blog_categories = []
+        # self.blog_ceo_desc = []
+        # self.blog_title_text = []
+        # self.blog_title_html = []
+        # self.blog_desc_text = []
+        # self.blog_desc_html = []
+        # self.blog_feature_image = []
+
+
+    def save_blog_data_to_xlsx(self,link,handle,ceo_title,Categories,ceo_desc,title_text,title_html,desc_text,desc_html,feature_image):
+        try:
+            # create file if not exist
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["link","handle","ceo_title","Categories","ceo_desc","title_text","title_html","desc_text","desc_html","feature_image"])
+            wb.save("blog.xlsx")
+        except:
+            pass
+
+        wb = load_workbook("blog.xlsx")
+        ws = wb.active
+        sheet = wb.worksheets[0]
+
+        # max row
+        last_row = ws.max_row
+        ws.cell(row=last_row+1, column=1, value=str(link))
+        ws.cell(row=last_row+1, column=2, value=str(handle))
+        ws.cell(row=last_row+1, column=3, value=str(ceo_title))
+        ws.cell(row=last_row+1, column=4, value=str(Categories))
+        ws.cell(row=last_row+1, column=5, value=str(ceo_desc))
+        ws.cell(row=last_row+1, column=6, value=str(title_text))
+        ws.cell(row=last_row+1, column=7, value=str(title_html))
+        ws.cell(row=last_row+1, column=8, value=str(desc_text))
+        ws.cell(row=last_row+1, column=9, value=str(desc_html))
+        ws.cell(row=last_row+1, column=10, value=str(feature_image))
+        wb.save("blog.xlsx")
+
+        wb.close()
+
+    def feature_images(self,soup):
+        feature_stc = ''
+        try:
+            main_contant = soup.find('main')
+            # find all img tags
+            imgs = main_contant.find_all('img')
+            for img in imgs:
+                # get src
+                feature_stc = img.get('src')
+                if feature_stc.find('300x300') != -1:
+                    feature_stc = feature_stc.replace('300x300','1200x1200')
+                # print(feature_stc)
+                if len(feature_stc) > 5:
+                    break
+        except:
+            feature_stc = ''
+        return feature_stc
+
+    def save_collections_data_to_xlsx(self,full_link,handle,ceo_title,ceo_description,title_text,title_html,desc_text,desc_html):
+        pass
+    def scaping_collections_data(self,all_categpries):
+
+        for category in all_categpries:
+            print(category)
+            if self.webarchive == True:
+                full_link = self.webarchive_url + self.domain + category
+            else:
+                full_link = self.domain + category
+            handle = category.split('/')[-1]
+
+            response = requests.get(full_link,timeout=60)
+            soup = bs(response.text, 'html.parser')
+
+            ceo_title = soup.find('meta', property='og:title')['content']
+            ceo_description = soup.find('meta', property='og:description')['content']
+            title_text = soup.find('title').text
+            try:
+                title_html = soup.find('h1')
+            except:
+                title_html = ''
+            self.save_collections_data_to_xlsx(full_link,handle,ceo_title,ceo_description,title_text,title_html,desc_text,desc_html)
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
     shopify_scrapper.webarchive = False
-    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
-    shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-
+    # shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
+    # shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
+    #
     # shopify_scrapper.domain = "https://www.univers-fleuri.com"
     shopify_scrapper.domain = "https://traditions-de-chine.com"
-    shopify_scrapper.create_xls_file()
+    # shopify_scrapper.create_xls_file()
     # all_categpries = shopify_scrapper.get_menu_links()
     all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
-    print(all_categpries)
-    shopify_scrapper.scrap_shopify(all_categpries)
-    shopify_scrapper.clean_duplicates()
+    # print(all_categpries)
+    # print(len(all_categpries))
+    # shopify_scrapper.scrap_shopify(all_categpries)
+    # shopify_scrapper.clean_duplicates()
+
+    shopify_scrapper.scaping_collections_data(all_categpries)
+    # get blog content data
+    # shopify_scrapper.get_blog_content()
 
 
     """
