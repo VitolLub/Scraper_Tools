@@ -974,17 +974,17 @@ class ShopifyScrapper:
             indexs += 1
 
 
-        wb.save("shopify.xlsx")
+        wb.save("shopify2.xlsx")
         wb.close()
 
         # remove dublicates using pandas
-        df = pd.read_excel('shopify.xlsx')
+        df = pd.read_excel('shopify2.xlsx')
         df.drop_duplicates(subset=['id'], inplace=True, keep='last')
-        df.to_excel('shopify.xlsx', index=False)
+        df.to_excel('shopify2.xlsx', index=False)
         print("Done")
 
         # in end of A column add product counter
-        wb = load_workbook("shopify.xlsx")
+        wb = load_workbook("shopify2.xlsx")
         sheet = wb.worksheets[0]
 
         # Iterate over the rows in the sheet
@@ -997,7 +997,7 @@ class ShopifyScrapper:
             indexs += 1
 
         sheet['A'+str(indexs+1)] = f"Products count {len(products_arr)}"
-        wb.save("shopify.xlsx")
+        wb.save("shopify2.xlsx")
         wb.close()
 
     def get_all_blog_posts(self,full_blog_link):
@@ -1347,10 +1347,10 @@ if __name__ == "__main__":
     print(len(all_categpries))
     shopify_scrapper.scrap_shopify(all_categpries)
     shopify_scrapper.clean_duplicates()
-
+    #
     shopify_scrapper.scaping_collections_data(all_categpries)
-    # get blog content data
-    shopify_scrapper.get_blog_content()
+    # # get blog content data
+    # shopify_scrapper.get_blog_content()
 
 
     """
