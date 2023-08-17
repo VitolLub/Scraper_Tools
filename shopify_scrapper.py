@@ -922,7 +922,8 @@ class ShopifyScrapper:
         for link in soup.find('ul', class_='site-nav list--inline').find_all('a'):
             menu_link = link.get('href')
             if menu_link.find('/collections') != -1:
-                all_categpries.append(menu_link)
+                if menu_link not in all_categpries:
+                    all_categpries.append(menu_link)
 
         return all_categpries
 
@@ -1029,7 +1030,7 @@ class ShopifyScrapper:
             # print(link)
             link = link.get('href')
             # print(link)
-            if link != None and link.find('blog') != -1:
+            if link != None and link.find('blogs') != -1:
                 blog_link = link
                 if blog_link.find('page') != -1 and blog_link not in self.extra_blog_pages:
                     self.extra_blog_pages.append(blog_link)
@@ -1038,33 +1039,33 @@ class ShopifyScrapper:
                         self.blog_links.append(blog_link)
 
     def get_blog_content(self):
-        # make request to blog
-        if self.webarchive == True:
-            url = self.webarchive_url + self.domain + "/blogs/" + self.blog_name
-
-        elif self.webarchive == False:
-            url = self.domain + "/blogs"
-
-        print(f"blog url {url}")
-        # quit()
-        self.requests_to_blog_posts(url)
-
-                # print(blog_link)
-
-        # get all blogs
-        for extra_link in self.extra_blog_pages:
-            full_blog_link = ''
-            if self.webarchive == True:
-                full_blog_link = self.webarchive_url_domain + extra_link
-
-            elif self.webarchive == False:
-                full_blog_link = self.domain + extra_link
-            print(f"full_blog_link {full_blog_link}")
-            self.requests_to_blog_posts(full_blog_link)
-
-        print(self.extra_blog_pages)
-        print(self.blog_links)
-        print(len(self.blog_links))
+        # # make request to blog
+        # if self.webarchive == True:
+        #     url = self.webarchive_url + self.domain + "/blogs/" + self.blog_name
+        #
+        # elif self.webarchive == False:
+        #     url = self.domain + "/blogs"
+        #
+        # print(f"blog url {url}")
+        # # quit()
+        # self.requests_to_blog_posts(url)
+        #
+        #         # print(blog_link)
+        #
+        # # get all blogs
+        # for extra_link in self.extra_blog_pages:
+        #     full_blog_link = ''
+        #     if self.webarchive == True:
+        #         full_blog_link = self.webarchive_url_domain + extra_link
+        #
+        #     elif self.webarchive == False:
+        #         full_blog_link = self.domain + extra_link
+        #     print(f"full_blog_link {full_blog_link}")
+        #     self.requests_to_blog_posts(full_blog_link)
+        #
+        # print(self.extra_blog_pages)
+        # print(self.blog_links)
+        # print(len(self.blog_links))
         # quit()
 
         # # get all blog posts
@@ -1075,6 +1076,7 @@ class ShopifyScrapper:
 
         # get all blog links
 
+        self.blog_links.append('/web/20220123131806/https://le-japonais-kawaii.com/blogs/blog-du-japonais-kawaii/kanji-japonais')
 
 
         # get all blogs data
@@ -1087,6 +1089,8 @@ class ShopifyScrapper:
                 try:
                     if self.webarchive == True:
                         fff_link = self.webarchive_url_domain + link
+                        print(fff_link)
+
                         page.goto(self.webarchive_url_domain + link, timeout=100000)
                     else:
                         fff_link = self.domain + link
@@ -1097,6 +1101,17 @@ class ShopifyScrapper:
 
                     # make soup
                     soup = bs(html, 'html.parser')
+
+                    all_a = soup.find_all('a')
+                    for a in all_a:
+                        a_href = a.get('href')
+                        # remove all https://web.archive.org/ from html
+                        if a_href != None:
+                            if a_href.find('https://web.archive.org/') != -1:
+                                a_href = a_href.replace('https://web.archive.org/','')
+                                a['href'] = a_href
+
+
 
                     handle_pos = link.find('/blogs/')
                     if handle_pos != -1:
@@ -1142,21 +1157,51 @@ class ShopifyScrapper:
                         title_html = ''
 
                     try:
-                        desc_html = soup.find('main')
-                        tags = desc_html.find_all(['p','h2'])
-                        desc_html_full = ''
-                        desc_text_full = ''
-                        desc_index = 0
-                        for tag in tags:
-                            # print(f"len(tags) {len(tags)} desc_index {desc_index}")
-                            if desc_index > 2 and desc_index < len(tags)-6:
-                                # print(tag)
-                                desc_html_full += str(tag)
-                                desc_text_full += tag.text
-                            desc_index += 1
+                        # print(soup)
+                        desc_html = soup.find('div', class_='rte')
+                        # print(desc_html)
+                        # quit()
+
+                        all_a = desc_html.find_all(['img','a'])
+                        for a in all_a:
+                            print(a.name)
+                            if a.name == 'a':
+                                hendl = 'href'
+                            elif a.name == 'img':
+                                hendl = 'src'
+                            a_href = a.get(hendl)
+                            print(a_href)
+                            # remove all https://web.archive.org/ from html
+                            if a_href != None:
+                                if a_href.find('https://') != -1:
+                                    # pass
+                                    a_href = a_href[a_href.find('https://'):]
+                                    print(a_href)
+                                    a['href'] = a_href
+
+
+                        desc_text_full = desc_html.text
+                        desc_html_full = str(desc_html)
+                        # if self.webarchive == True:
+                        #     # remove all https://web.archive.org from html
+                        #     desc_html = str(desc_html).replace('https://web.archive.org','')
+                        #     desc_html = soup(desc_html, 'html.parser')
+
+                        # tags = desc_html.find_all(['p','h2'])
+                        # desc_html_full = ''
+                        # desc_text_full = ''
+                        # desc_index = 0
+                        # for tag in tags:
+                        #     # print(f"len(tags) {len(tags)} desc_index {desc_index}")
+                        #     if desc_index > 2 and desc_index < len(tags)-6:
+                        #         # print(tag)
+                        #         desc_html_full += str(tag)
+                        #         desc_text_full += tag.text
+                        #     desc_index += 1
                         # get all tags inside main
                         # desc_text = desc_html_full.text
-                    except:
+                    except Exception as e:
+                        print(e)
                         print(f"Error desc_html_full ")
                         desc_html_full = ''
                         desc_text_full = ''
@@ -1218,16 +1263,16 @@ class ShopifyScrapper:
             # max row
 
             next_row = sheet.max_row + 1
-            ws.cell(row=next_row, column=1, value=str(link))
-            ws.cell(row=next_row, column=2, value=str(handle))
-            ws.cell(row=next_row, column=3, value=str(ceo_title))
-            ws.cell(row=next_row, column=4, value=str(Categories))
-            ws.cell(row=next_row, column=5, value=str(ceo_desc))
-            ws.cell(row=next_row, column=6, value=str(title_text))
-            ws.cell(row=next_row, column=7, value=str(title_html))
-            ws.cell(row=next_row, column=8, value=str(desc_text))
-            ws.cell(row=next_row, column=9, value=str(desc_html))
-            ws.cell(row=next_row, column=10, value=str(feature_image))
+            ws.cell(row=next_row, column=1, value=str(link).strip())
+            ws.cell(row=next_row, column=2, value=str(handle).strip())
+            ws.cell(row=next_row, column=3, value=str(ceo_title).strip())
+            ws.cell(row=next_row, column=4, value=str(Categories).strip())
+            ws.cell(row=next_row, column=5, value=str(ceo_desc).strip())
+            ws.cell(row=next_row, column=6, value=str(title_text).strip())
+            ws.cell(row=next_row, column=7, value=str(title_html).strip())
+            ws.cell(row=next_row, column=8, value=str(desc_text).strip())
+            ws.cell(row=next_row, column=9, value=str(desc_html).strip())
+            ws.cell(row=next_row, column=10, value=str(feature_image).strip())
             next_row += 1
             wb.save("blog.xlsx")
 
@@ -1279,22 +1324,30 @@ class ShopifyScrapper:
 
         # max row
         next_row = sheet.max_row + 1
-        ws.cell(row=next_row, column=1, value=str(full_link))
-        ws.cell(row=next_row, column=2, value=str(handle))
-        ws.cell(row=next_row, column=3, value=str(title_text))
-        ws.cell(row=next_row, column=4, value=str(ceo_description))
-        ws.cell(row=next_row, column=5, value=str(ceo_title))
-        ws.cell(row=next_row, column=6, value=str(title_html))
-        ws.cell(row=next_row, column=7, value=str(desc_text))
-        ws.cell(row=next_row, column=8, value=str(desc_html))
+        ws.cell(row=next_row, column=1, value=str(full_link).strip())
+        ws.cell(row=next_row, column=2, value=str(handle).strip())
+        ws.cell(row=next_row, column=3, value=str(title_text).strip())
+        ws.cell(row=next_row, column=4, value=str(ceo_description).strip())
+        ws.cell(row=next_row, column=5, value=str(ceo_title).strip())
+        ws.cell(row=next_row, column=6, value=str(title_html).strip())
+        ws.cell(row=next_row, column=7, value=str(desc_text).strip())
+        ws.cell(row=next_row, column=8, value=str(desc_html).strip())
         next_row += 1
         wb.save("collections.xlsx")
         wb.close()
+        print(f"Save collection is done")
 
     def scaping_collections_data(self,all_categpries):
-
+        colect_index = 0
         for category in all_categpries:
+            try:
+                cat_pos = category.find('/products/')
+                if cat_pos != -1:
+                    category = category[:cat_pos]
+            except:
+                pass
             print(category)
+            print(colect_index)
             if self.webarchive == True:
                 full_link = self.webarchive_url_domain + category
             else:
@@ -1304,30 +1357,32 @@ class ShopifyScrapper:
             handle = category.split('/')[-1]
 
             response = requests.get(full_link,timeout=90)
+            print(response.status_code)
             if response.status_code == 200:
                 print(response.status_code)
+                # try:
+                soup = bs(response.text, 'html.parser')
+
+                ceo_title = soup.find('meta', property='og:title')['content']
+                ceo_description = soup.find('meta', property='og:description')['content']
+                title_text = soup.find('title').text
                 try:
-                    soup = bs(response.text, 'html.parser')
-
-                    ceo_title = soup.find('meta', property='og:title')['content']
-                    ceo_description = soup.find('meta', property='og:description')['content']
-                    title_text = soup.find('title').text
-                    try:
-                        title_html = soup.find('h1')
-                    except:
-                        title_html = ''
-
-                    try:
-                        desc_html = soup.find('div', class_='rte')
-                        desc_text = desc_html.text
-                    except:
-                        desc_html = ''
-                        desc_text = ''
-
-
-                    self.save_collections_data_to_xlsx(full_link,handle,ceo_title,ceo_description,title_text,title_html,desc_text,desc_html)
+                    title_html = soup.find('h1')
                 except:
-                    pass
+                    title_html = ''
+
+                try:
+                    desc_html = soup.find('div', class_='rte')
+                    desc_text = desc_html.text
+                except:
+                    desc_html = ''
+                    desc_text = ''
+
+
+                self.save_collections_data_to_xlsx(full_link,handle,ceo_title,ceo_description,title_text,title_html,desc_text,desc_html)
+                # except:
+                #     pass
+            colect_index += 1
 
 
 
@@ -1337,29 +1392,35 @@ if __name__ == "__main__":
     shopify_scrapper.webarchive_url = "http://web.archive.org/web/20220123131806/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
     shopify_scrapper.blog_name = "blog-du-japonais-kawaii"
-    #
+
     shopify_scrapper.domain = "https://le-japonais-kawaii.com"
-    # shopify_scrapper.domain = "https://traditions-de-chine.com"
-    shopify_scrapper.create_xls_file()
+    # shopify_scrapper.create_xls_file()
     all_categpries = shopify_scrapper.get_menu_links()
-    # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
+    # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
     print(all_categpries)
     print(len(all_categpries))
-    shopify_scrapper.scrap_shopify(all_categpries)
-    shopify_scrapper.clean_duplicates()
-    #
-    shopify_scrapper.scaping_collections_data(all_categpries)
+    # shopify_scrapper.scrap_shopify(all_categpries)
+    # shopify_scrapper.clean_duplicates()
+    # #
+    # shopify_scrapper.scaping_collections_data(all_categpries)
     # # get blog content data
-    # shopify_scrapper.get_blog_content()
+    shopify_scrapper.get_blog_content()
 
 
-    """
-    autour-du-the.com
-    boutique-du-tigre.fr
-    horloge-design.com
-    
 
-    """
+
+    # # load shopify file
+    # wb = load_workbook("shopify.xlsx")
+    # sheet = wb.worksheets[0]
+    # # Iterate over the rows in the sheet
+    # indexs = 0
+    # products_arr = []
+    # for row in sheet:
+    #     ids = row[1].value
+    #     if ids not in products_arr:
+    #         products_arr.append(ids)
+    #     indexs += 1
+    # print(len(products_arr))
 
 
 
