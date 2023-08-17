@@ -8,6 +8,7 @@ import sys
 import pandas as pd
 from playwright.sync_api import sync_playwright
 import random
+import os
 
 class ShopifyScrapper:
 
@@ -76,7 +77,8 @@ class ShopifyScrapper:
         self.blog_desc_text = []
         self.blog_desc_html = []
         self.blog_feature_image = []
-
+        self.blog_name = ''
+        self.extra_blog_pages = []
     def remove_all_none_tags(self,soup):
         # print('remove_all_none_tags')
         # remove all ul is not None and len(ul.text) > 40
@@ -340,7 +342,7 @@ class ShopifyScrapper:
 
     def request_link_by_link(self,link_by_item,proxy_index,s):
         # link_by_item = "https://traditions-de-chine.com/collections/bols-chinois/products/bol-chinois-noir"
-        # print("request_link_by_link")
+        print(f"link_by_item {link_by_item}")
 
          # make request
         response_item = self.make_request(link_by_item, proxy_index, s)
@@ -413,6 +415,7 @@ class ShopifyScrapper:
                     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
 
                 index = 0
+                h2_html_origin = ''
                 for h2 in all_desc.find_all('h2'):
                     if index == 0:
                         # remove style attr from h2
@@ -901,8 +904,8 @@ class ShopifyScrapper:
     def get_menu_links(self):
         url = ''
         if self.webarchive == True:
-            url = self.webarchive_url+""+self.domain
-
+            url = self.webarchive_url+""+self.domain+"/collections/vetements"
+        print(url)
         if self.webarchive == False:
             url = self.domain
 
@@ -910,11 +913,13 @@ class ShopifyScrapper:
         response = requests.get(url,timeout=60)
 
         soup = bs(response.text, 'html.parser')
+        # print(soup)
+        # quit()
         # for link in soup.find('div', class_='nav nav--combined clearfix').find_all('a'):
         # for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
         #
-        for link in soup.find('div', class_='grid-item text-center large--text-right').find_all('a'):
-        # for link in soup.find('ul', class_='meganav__nav page-width').find_all('a'):
+        # for link in soup.find('div', class_='grid-item text-center large--text-right').find_all('a'):
+        for link in soup.find('ul', class_='site-nav list--inline').find_all('a'):
             menu_link = link.get('href')
             if menu_link.find('/collections') != -1:
                 all_categpries.append(menu_link)
@@ -998,6 +1003,7 @@ class ShopifyScrapper:
     def get_all_blog_posts(self,full_blog_link):
         print(f"full_blog_link {full_blog_link}")
         print(f"self.blog_links. {len(self.blog_links)}")
+        # quit()
         respo = requests.get(full_blog_link, timeout=60)
         soup = bs(respo.text, 'html.parser')
 
@@ -1011,11 +1017,8 @@ class ShopifyScrapper:
                 if slesh_len > 2:
                     self.blog_links.append(link)
 
-    def get_blog_content(self):
-        # make request to blog
-        url = self.domain + "/blogs"
-
-        response = requests.get(url,timeout=60)
+    def requests_to_blog_posts(self,url):
+        response = requests.get(url, timeout=60)
         soup = bs(response.text, 'html.parser')
         # print(soup)
 
@@ -1028,25 +1031,50 @@ class ShopifyScrapper:
             # print(link)
             if link != None and link.find('blog') != -1:
                 blog_link = link
+                if blog_link.find('page') != -1 and blog_link not in self.extra_blog_pages:
+                    self.extra_blog_pages.append(blog_link)
+                elif blog_link not in self.blog_links:
+                    if blog_link.find('facebook') == -1 and blog_link.find('twitter') == -1 and blog_link.find('pinterest') == -1 and blog_link.find('?page=') == -1:
+                        self.blog_links.append(blog_link)
+
+    def get_blog_content(self):
+        # make request to blog
+        if self.webarchive == True:
+            url = self.webarchive_url + self.domain + "/blogs/" + self.blog_name
+
+        elif self.webarchive == False:
+            url = self.domain + "/blogs"
+
+        print(f"blog url {url}")
+        # quit()
+        self.requests_to_blog_posts(url)
+
+                # print(blog_link)
 
         # get all blogs
-        if self.webarchive == True:
-            full_blog_link = self.webarchive_url + self.domain + blog_link
-        elif self.webarchive == False:
-            full_blog_link = self.domain + blog_link
+        for extra_link in self.extra_blog_pages:
+            full_blog_link = ''
+            if self.webarchive == True:
+                full_blog_link = self.webarchive_url_domain + extra_link
 
+            elif self.webarchive == False:
+                full_blog_link = self.domain + extra_link
+            print(f"full_blog_link {full_blog_link}")
+            self.requests_to_blog_posts(full_blog_link)
 
-
-        # get all blog posts
-        self.get_all_blog_posts(full_blog_link)
-
-        for page in self.blog_next_pages:
-            self.get_all_blog_posts(page)
-
-        # get all blog links
-        print(self.blog_next_pages)
+        print(self.extra_blog_pages)
         print(self.blog_links)
         print(len(self.blog_links))
+        # quit()
+
+        # # get all blog posts
+        # self.get_all_blog_posts(full_blog_link)
+        #
+        # for page in self.blog_next_pages:
+        #     self.get_all_blog_posts(page)
+
+        # get all blog links
+
 
 
         # get all blogs data
@@ -1056,94 +1084,102 @@ class ShopifyScrapper:
             page = browser.new_page()
 
             for link in self.blog_links:
-                page.goto(self.domain+link, timeout=100000)
-
-                # get html content
-                html = page.content()
-
-                # make soup
-                soup = bs(html, 'html.parser')
-
-                handle_pos = link.find('/blogs/')
-                if handle_pos != -1:
-                    handle = link[handle_pos+7:]
-                    print(handle)
-                    self.blog_hendle.append(handle)
-
-                # get og:title
                 try:
-                    og_title = soup.find('meta', property='og:title')['content']
-                    print(og_title)
-                    self.blog_title_text.append(og_title)
+                    if self.webarchive == True:
+                        fff_link = self.webarchive_url_domain + link
+                        page.goto(self.webarchive_url_domain + link, timeout=100000)
+                    else:
+                        fff_link = self.domain + link
+                        page.goto(self.domain+link, timeout=100000)
+
+                    # get html content
+                    html = page.content()
+
+                    # make soup
+                    soup = bs(html, 'html.parser')
+
+                    handle_pos = link.find('/blogs/')
+                    if handle_pos != -1:
+                        handle = link[handle_pos+7:]
+                        print(handle)
+                        self.blog_hendle.append(handle)
+
+                    # get og:title
+                    try:
+                        og_title = soup.find('meta', property='og:title')['content']
+                        print(og_title)
+                        self.blog_title_text.append(og_title)
+                    except:
+                        self.blog_title_text.append('')
+
+                    # get og:description
+                    try:
+                        ceo_desc = soup.find('meta', property='og:description')['content']
+                        print(ceo_desc)
+                        self.blog_desc_text.append(ceo_desc)
+                    except:
+                        ceo_desc = ''
+
+                    try:
+                        # get title tag
+                        ceo_title = soup.find('title').text
+                        print(ceo_title)
+                        self.blog_ceo_title.append(ceo_title)
+                    except:
+                        ceo_title = ''
+
+
+                    try:
+                        # get title tag html
+                        # find h1
+                        title_html = soup.find('h1')
+                        title_text = title_html.text
+                        print(str(title_html))
+                        print(title_text)
+                        self.blog_title_html.append(str(title_html))
+                    except:
+                        title_text = ''
+                        title_html = ''
+
+                    try:
+                        desc_html = soup.find('main')
+                        tags = desc_html.find_all(['p','h2'])
+                        desc_html_full = ''
+                        desc_text_full = ''
+                        desc_index = 0
+                        for tag in tags:
+                            # print(f"len(tags) {len(tags)} desc_index {desc_index}")
+                            if desc_index > 2 and desc_index < len(tags)-6:
+                                # print(tag)
+                                desc_html_full += str(tag)
+                                desc_text_full += tag.text
+                            desc_index += 1
+                        # get all tags inside main
+                        # desc_text = desc_html_full.text
+                    except:
+                        print(f"Error desc_html_full ")
+                        desc_html_full = ''
+                        desc_text_full = ''
+
+                    try:
+                        print(f"handle {handle}")
+                        r_find = handle.rfind('/')
+                        Categories = handle[:r_find]
+                    except:
+                        Categories = ''
+
+
+
+                    # get featured image
+                    feature_image = self.feature_images(soup)
+                    print(feature_image)
+                    self.blog_feature_image.append(feature_image)
+                    # Categories = ''
+                    # desc_text = ''
+                    # desc_html = ''
+                    self.save_blog_data_to_xlsx(fff_link,handle,ceo_title,Categories,ceo_desc,title_text,title_html,desc_text_full,desc_html_full,feature_image)
                 except:
-                    self.blog_title_text.append('')
-
-                # get og:description
-                try:
-                    ceo_desc = soup.find('meta', property='og:description')['content']
-                    print(ceo_desc)
-                    self.blog_desc_text.append(ceo_desc)
-                except:
-                    self.blog_desc_text.append('')
-
-                try:
-                    # get title tag
-                    ceo_title = soup.find('title').text
-                    print(ceo_title)
-                    self.blog_ceo_title.append(ceo_title)
-                except:
-                    self.blog_ceo_title.append('')
-
-
-                try:
-                    # get title tag html
-                    # find h1
-                    title_html = soup.find('h1')
-                    title_text = title_html.text
-                    print(str(title_html))
-                    print(title_text)
-                    self.blog_title_html.append(str(title_html))
-                except:
-                    title_text = ''
-
-                try:
-                    desc_html = soup.find('main')
-                    tags = desc_html.find_all(['p','h2'])
-                    desc_html_full = ''
-                    desc_text_full = ''
-                    desc_index = 0
-                    for tag in tags:
-                        # print(f"len(tags) {len(tags)} desc_index {desc_index}")
-                        if desc_index > 2 and desc_index < len(tags)-6:
-                            # print(tag)
-                            desc_html_full += str(tag)
-                            desc_text_full += tag.text
-                        desc_index += 1
-                    # get all tags inside main
-                    # desc_text = desc_html_full.text
-                except:
-                    print(f"Error desc_html_full ")
-                    desc_html_full = ''
-                    desc_text_full = ''
-
-                try:
-                    print(f"handle {handle}")
-                    r_find = handle.rfind('/')
-                    Categories = handle[:r_find]
-                except:
-                    Categories = ''
-
-
-
-                # get featured image
-                feature_image = self.feature_images(soup)
-                print(feature_image)
-                self.blog_feature_image.append(feature_image)
-                # Categories = ''
-                # desc_text = ''
-                # desc_html = ''
-                self.save_blog_data_to_xlsx(self.domain+link,handle,ceo_title,Categories,ceo_desc,title_text,title_html,desc_text_full,desc_html_full,feature_image)
-                break
+                    pass
 
 
 
@@ -1162,34 +1198,40 @@ class ShopifyScrapper:
 
 
     def save_blog_data_to_xlsx(self,link,handle,ceo_title,Categories,ceo_desc,title_text,title_html,desc_text,desc_html,feature_image):
+        # check if blog.xlsx exist
         try:
-            # create file if not exist
+            wb = load_workbook("blog.xlsx")
+        except:
+            # if not exist create file
             wb = Workbook()
             ws = wb.active
-            ws.append(["link","handle","ceo_title","Categories","ceo_desc","title_text","title_html","desc_text","desc_html","feature_image"])
+            ws.append(["link", "handle", "ceo_title", "Categories", "ceo_desc", "title_text", "title_html", "desc_text",
+                       "desc_html","feature_image"])
             wb.save("blog.xlsx")
-        except:
-            pass
 
-        wb = load_workbook("blog.xlsx")
-        ws = wb.active
-        sheet = wb.worksheets[0]
+        if title_text != 'Not Found' or ceo_title != "404 Not Found":
+            print("save_blog_data_to_xlsx")
+            wb = load_workbook("blog.xlsx")
+            ws = wb.active
+            sheet = wb.worksheets[0]
 
-        # max row
-        last_row = ws.max_row
-        ws.cell(row=last_row+1, column=1, value=str(link))
-        ws.cell(row=last_row+1, column=2, value=str(handle))
-        ws.cell(row=last_row+1, column=3, value=str(ceo_title))
-        ws.cell(row=last_row+1, column=4, value=str(Categories))
-        ws.cell(row=last_row+1, column=5, value=str(ceo_desc))
-        ws.cell(row=last_row+1, column=6, value=str(title_text))
-        ws.cell(row=last_row+1, column=7, value=str(title_html))
-        ws.cell(row=last_row+1, column=8, value=str(desc_text))
-        ws.cell(row=last_row+1, column=9, value=str(desc_html))
-        ws.cell(row=last_row+1, column=10, value=str(feature_image))
-        wb.save("blog.xlsx")
+            # max row
 
-        wb.close()
+            next_row = sheet.max_row + 1
+            ws.cell(row=next_row, column=1, value=str(link))
+            ws.cell(row=next_row, column=2, value=str(handle))
+            ws.cell(row=next_row, column=3, value=str(ceo_title))
+            ws.cell(row=next_row, column=4, value=str(Categories))
+            ws.cell(row=next_row, column=5, value=str(ceo_desc))
+            ws.cell(row=next_row, column=6, value=str(title_text))
+            ws.cell(row=next_row, column=7, value=str(title_html))
+            ws.cell(row=next_row, column=8, value=str(desc_text))
+            ws.cell(row=next_row, column=9, value=str(desc_html))
+            ws.cell(row=next_row, column=10, value=str(feature_image))
+            next_row += 1
+            wb.save("blog.xlsx")
+
+            wb.close()
 
     def feature_images(self,soup):
         feature_stc = ''
@@ -1200,6 +1242,7 @@ class ShopifyScrapper:
             for img in imgs:
                 # get src
                 feature_stc = img.get('src')
+                print(feature_stc)
                 if feature_stc.find('300x300') != -1:
                     feature_stc = feature_stc.replace('300x300','1200x1200')
                 # print(feature_stc)
@@ -1210,47 +1253,104 @@ class ShopifyScrapper:
         return feature_stc
 
     def save_collections_data_to_xlsx(self,full_link,handle,ceo_title,ceo_description,title_text,title_html,desc_text,desc_html):
-        pass
+        # try:
+        #     # remove collections file
+        #     # os.remove("collections.xlsx")
+        #     # create file if not exist
+        #     wb = Workbook()
+        #     ws = wb.active
+        #     ws.append(["link", "handle", "ceo_title", "ceo_desc", "title_text", "title_html", "desc_text",
+        #                "desc_html"])
+        #     wb.save("collections.xlsx")
+        # except:
+        #     pass
+        try:
+            wb = load_workbook("collections.xlsx")
+        except:
+            # create file if not exist
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["link", "handle", "ceo_title", "ceo_desc", "title_text", "title_html", "desc_text",
+                       "desc_html"])
+            wb.save("collections.xlsx")
+
+        ws = wb.active
+        sheet = wb.worksheets[0]
+
+        # max row
+        next_row = sheet.max_row + 1
+        ws.cell(row=next_row, column=1, value=str(full_link))
+        ws.cell(row=next_row, column=2, value=str(handle))
+        ws.cell(row=next_row, column=3, value=str(title_text))
+        ws.cell(row=next_row, column=4, value=str(ceo_description))
+        ws.cell(row=next_row, column=5, value=str(ceo_title))
+        ws.cell(row=next_row, column=6, value=str(title_html))
+        ws.cell(row=next_row, column=7, value=str(desc_text))
+        ws.cell(row=next_row, column=8, value=str(desc_html))
+        next_row += 1
+        wb.save("collections.xlsx")
+        wb.close()
+
     def scaping_collections_data(self,all_categpries):
 
         for category in all_categpries:
             print(category)
             if self.webarchive == True:
-                full_link = self.webarchive_url + self.domain + category
+                full_link = self.webarchive_url_domain + category
             else:
                 full_link = self.domain + category
+            print(full_link)
+            # quit()
             handle = category.split('/')[-1]
 
-            response = requests.get(full_link,timeout=60)
-            soup = bs(response.text, 'html.parser')
+            response = requests.get(full_link,timeout=90)
+            if response.status_code == 200:
+                print(response.status_code)
+                try:
+                    soup = bs(response.text, 'html.parser')
 
-            ceo_title = soup.find('meta', property='og:title')['content']
-            ceo_description = soup.find('meta', property='og:description')['content']
-            title_text = soup.find('title').text
-            try:
-                title_html = soup.find('h1')
-            except:
-                title_html = ''
-            self.save_collections_data_to_xlsx(full_link,handle,ceo_title,ceo_description,title_text,title_html,desc_text,desc_html)
+                    ceo_title = soup.find('meta', property='og:title')['content']
+                    ceo_description = soup.find('meta', property='og:description')['content']
+                    title_text = soup.find('title').text
+                    try:
+                        title_html = soup.find('h1')
+                    except:
+                        title_html = ''
+
+                    try:
+                        desc_html = soup.find('div', class_='rte')
+                        desc_text = desc_html.text
+                    except:
+                        desc_html = ''
+                        desc_text = ''
+
+
+                    self.save_collections_data_to_xlsx(full_link,handle,ceo_title,ceo_description,title_text,title_html,desc_text,desc_html)
+                except:
+                    pass
+
+
+
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.webarchive = False
-    # shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210920200301/"
-    # shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
+    shopify_scrapper.webarchive = True
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20220123131806/"
+    shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
+    shopify_scrapper.blog_name = "blog-du-japonais-kawaii"
     #
-    # shopify_scrapper.domain = "https://www.univers-fleuri.com"
-    shopify_scrapper.domain = "https://traditions-de-chine.com"
-    # shopify_scrapper.create_xls_file()
-    # all_categpries = shopify_scrapper.get_menu_links()
-    all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
-    # print(all_categpries)
-    # print(len(all_categpries))
-    # shopify_scrapper.scrap_shopify(all_categpries)
-    # shopify_scrapper.clean_duplicates()
+    shopify_scrapper.domain = "https://le-japonais-kawaii.com"
+    # shopify_scrapper.domain = "https://traditions-de-chine.com"
+    shopify_scrapper.create_xls_file()
+    all_categpries = shopify_scrapper.get_menu_links()
+    # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
+    print(all_categpries)
+    print(len(all_categpries))
+    shopify_scrapper.scrap_shopify(all_categpries)
+    shopify_scrapper.clean_duplicates()
 
     shopify_scrapper.scaping_collections_data(all_categpries)
     # get blog content data
-    # shopify_scrapper.get_blog_content()
+    shopify_scrapper.get_blog_content()
 
 
     """
