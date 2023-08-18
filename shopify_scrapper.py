@@ -904,7 +904,7 @@ class ShopifyScrapper:
     def get_menu_links(self):
         url = ''
         if self.webarchive == True:
-            url = self.webarchive_url+""+self.domain+"/collections/vetements"
+            url = self.webarchive_url+""+self.domain #+"/collections/vetements"
         print(url)
         if self.webarchive == False:
             url = self.domain
@@ -919,7 +919,7 @@ class ShopifyScrapper:
         # for link in soup.find('div', class_='nav nav--combined center').find_all('a'):
         #
         # for link in soup.find('div', class_='grid-item text-center large--text-right').find_all('a'):
-        for link in soup.find('ul', class_='site-nav list--inline').find_all('a'):
+        for link in soup.find('ul', class_='site-nav nav-position-1').find_all('a'):
             menu_link = link.get('href')
             if menu_link.find('/collections') != -1:
                 if menu_link not in all_categpries:
@@ -1005,18 +1005,21 @@ class ShopifyScrapper:
         print(f"full_blog_link {full_blog_link}")
         print(f"self.blog_links. {len(self.blog_links)}")
         # quit()
-        respo = requests.get(full_blog_link, timeout=60)
-        soup = bs(respo.text, 'html.parser')
+        try:
+            respo = requests.get(full_blog_link, timeout=60)
+            soup = bs(respo.text, 'html.parser')
 
-        blog_links = soup.find_all(['a'])
-        for link in blog_links:
-            link = link.get('href')
-            if link != None and link.find('blogs') != -1:
-                slesh_len = link.count('/')
-                if link.find('?page') != -1 and self.domain + link not in self.blog_next_pages:
-                    self.blog_next_pages.append(self.domain + link)
-                if slesh_len > 2:
-                    self.blog_links.append(link)
+            blog_links = soup.find_all(['a'])
+            for link in blog_links:
+                link = link.get('href')
+                if link != None and link.find('blogs') != -1:
+                    slesh_len = link.count('/')
+                    if link.find('?page') != -1 and self.domain + link not in self.blog_next_pages:
+                        self.blog_next_pages.append(self.domain + link)
+                    if slesh_len > 2 and link.find("*/") == -1 and link.find('tagged') == -1:
+                        self.blog_links.append(link)
+        except:
+            pass
 
     def requests_to_blog_posts(self,url):
         response = requests.get(url, timeout=60)
@@ -1035,55 +1038,59 @@ class ShopifyScrapper:
                 if blog_link.find('page') != -1 and blog_link not in self.extra_blog_pages:
                     self.extra_blog_pages.append(blog_link)
                 elif blog_link not in self.blog_links:
-                    if blog_link.find('facebook') == -1 and blog_link.find('twitter') == -1 and blog_link.find('pinterest') == -1 and blog_link.find('?page=') == -1:
+                    if blog_link.find('facebook') == -1 and blog_link.find('twitter') == -1 and blog_link.find('pinterest') == -1 and blog_link.find('?page=') == -1 and link.find("*/") == -1 and link.find('tagged') == -1:
                         self.blog_links.append(blog_link)
 
     def get_blog_content(self):
-        # # make request to blog
-        # if self.webarchive == True:
-        #     url = self.webarchive_url + self.domain + "/blogs/" + self.blog_name
-        #
-        # elif self.webarchive == False:
-        #     url = self.domain + "/blogs"
-        #
-        # print(f"blog url {url}")
-        # # quit()
-        # self.requests_to_blog_posts(url)
-        #
-        #         # print(blog_link)
-        #
-        # # get all blogs
-        # for extra_link in self.extra_blog_pages:
-        #     full_blog_link = ''
-        #     if self.webarchive == True:
-        #         full_blog_link = self.webarchive_url_domain + extra_link
-        #
-        #     elif self.webarchive == False:
-        #         full_blog_link = self.domain + extra_link
-        #     print(f"full_blog_link {full_blog_link}")
-        #     self.requests_to_blog_posts(full_blog_link)
-        #
-        # print(self.extra_blog_pages)
-        # print(self.blog_links)
-        # print(len(self.blog_links))
+        # make request to blog
+        if self.webarchive == True:
+            url = self.webarchive_url + self.domain + "/blogs/" + self.blog_name
+
+        elif self.webarchive == False:
+            url = self.domain + "/blogs"
+
+        print(f"blog url {url}")
+        # quit()
+        self.requests_to_blog_posts(url)
+
+                # print(blog_link)
+
+        # get all blogs
+        full_blog_link = ''
+        for extra_link in self.extra_blog_pages:
+            full_blog_link = ''
+            if self.webarchive == True:
+                full_blog_link = self.webarchive_url_domain + extra_link
+
+            elif self.webarchive == False:
+                full_blog_link = self.domain + extra_link
+            print(f"full_blog_link {full_blog_link}")
+            self.requests_to_blog_posts(full_blog_link)
+
+
+        # remove duplicates from self.blog_links
+
         # quit()
 
-        # # get all blog posts
-        # self.get_all_blog_posts(full_blog_link)
-        #
-        # for page in self.blog_next_pages:
-        #     self.get_all_blog_posts(page)
+        # get all blog posts
+        self.get_all_blog_posts(full_blog_link)
+
+        for page in self.blog_next_pages:
+            self.get_all_blog_posts(page)
 
         # get all blog links
 
-        self.blog_links.append('/web/20220123131806/https://le-japonais-kawaii.com/blogs/blog-du-japonais-kawaii/kanji-japonais')
-
-
+        self.blog_links = list(dict.fromkeys(self.blog_links))
+        # print(self.extra_blog_pages)
+        print(self.blog_links)
+        print(len(self.blog_links))
         # get all blogs data
         requests_stat = False
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=False)
             page = browser.new_page()
+            # remvoe 0 element
+            self.blog_links.pop(0)
 
             for link in self.blog_links:
                 try:
@@ -1177,7 +1184,7 @@ class ShopifyScrapper:
                                     # pass
                                     a_href = a_href[a_href.find('https://'):]
                                     print(a_href)
-                                    a['href'] = a_href
+                                    a[hendl] = a_href
 
 
                         desc_text_full = desc_html.text
@@ -1362,10 +1369,14 @@ class ShopifyScrapper:
                 print(response.status_code)
                 # try:
                 soup = bs(response.text, 'html.parser')
-
-                ceo_title = soup.find('meta', property='og:title')['content']
-                ceo_description = soup.find('meta', property='og:description')['content']
-                title_text = soup.find('title').text
+                try:
+                    ceo_title = soup.find('meta', property='og:title')['content']
+                    ceo_description = soup.find('meta', property='og:description')['content']
+                    title_text = soup.find('title').text
+                except:
+                    ceo_title = ''
+                    ceo_description = ''
+                    title_text = ''
                 try:
                     title_html = soup.find('h1')
                 except:
@@ -1389,11 +1400,11 @@ class ShopifyScrapper:
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
     shopify_scrapper.webarchive = True
-    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20220123131806/"
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210617083736/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-    shopify_scrapper.blog_name = "blog-du-japonais-kawaii"
+    shopify_scrapper.blog_name = "le-blog-des-fleurs"
 
-    shopify_scrapper.domain = "https://le-japonais-kawaii.com"
+    shopify_scrapper.domain = "https://www.univers-fleuri.com"
     # shopify_scrapper.create_xls_file()
     all_categpries = shopify_scrapper.get_menu_links()
     # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
@@ -1402,7 +1413,7 @@ if __name__ == "__main__":
     # shopify_scrapper.scrap_shopify(all_categpries)
     # shopify_scrapper.clean_duplicates()
     # #
-    # shopify_scrapper.scaping_collections_data(all_categpries)
+    shopify_scrapper.scaping_collections_data(all_categpries)
     # # get blog content data
     shopify_scrapper.get_blog_content()
 

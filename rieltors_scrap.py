@@ -379,15 +379,19 @@ class Rieltors:
     def read_csv_file(self):
         self.cities_array = []
         # read csv file uscities.csv line by line
+        forvard = False
         with open('uscities.csv', newline='') as csvfile:
             # get state_name
             reader = csv.DictReader(csvfile)
             for row in reader:
-                if row['state_name'] == 'Florida' : #and row['city_ascii'] != 'Miami' and row['city_ascii'] != 'Tampa'
-                    zip_arr = row['zips'].split(' ')
-                    for zip in zip_arr:
-                        # print(row['state_name'],row['city_ascii'],zip)
-                        self.cities_array.append([str(row['state_name'])+",",str(row['city_ascii'])+",",str(zip)])
+                if row['city_ascii'] == "Davie":
+                    forvard = True
+                if forvard == True:
+                    if row['state_name'] == 'Florida': #and row['city_ascii'] != 'Miami' and row['city_ascii'] != 'Tampa'
+                        zip_arr = row['zips'].split(' ')
+                        for zip in zip_arr:
+                            # print(row['state_name'],row['city_ascii'],zip)
+                            self.cities_array.append([str(row['state_name'])+",",str(row['city_ascii'])+",",str(zip)])
 
         return self.cities_array
 
@@ -592,20 +596,100 @@ class Rieltors:
                     # print(row['city'], row['state_name'])
                     self.cities_array.append(row['city'])
             # quit()
+
+    def save_data_into_excel(self):
+        connection = self.postgres_connect()
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM data_collections_data_collections")
+        rows = cursor.fetchall()
+
+        index = 1
+        index_last = 0
+        for row in rows:
+            print(row[1])
+            self.email_array.append(row[1])
+            self.phone_array.append(row[2])
+            self.name_array.append(row[3])
+            self.state_array.append(row[4])
+            self.city_array.append(row[5])
+            self.zip_array.append(row[6])
+            self.company_array.append(row[7])
+            index_last += 1
+            if len(self.email_array) == 10000:
+                index = self.save_into_excel(index,index_last)
+                # clen all arrays
+                for name, value in vars(self).items():
+                    # clear all variables
+                    if type(value) is list:
+                        value.clear()
+        index = self.save_into_excel(index, index_last)
+
+
+    def save_into_excel(self,index,index_last):
+        print(f"index,index_last {index,index_last}" )
+        # create file if not exist
+        try:
+            # load file
+            wb = load_workbook("rieltors"+str(index)+"_"+str(index_last)+".xlsx")
+            # get active sheet
+            ws = wb.active
+            # get last row
+            last_row = ws.max_row
+            # print(last_row)
+
+            # loop through each element
+            for i in range(len(self.name_array)):
+                # save data into excel
+                ws.cell(row=last_row+i+1, column=1, value=str(self.name_array[i]))
+                ws.cell(row=last_row+i+1, column=2, value=str(self.phone_array[i]))
+                ws.cell(row=last_row+i+1, column=3, value=str(self.email_array[i]))
+                ws.cell(row=last_row+i+1, column=4, value=str(self.state_array[i]))
+                ws.cell(row=last_row+i+1, column=5, value=str(self.city_array[i]))
+                ws.cell(row=last_row+i+1, column=6, value=str(self.zip_array[i]))
+                ws.cell(row=last_row+i+1, column=7, value=str(self.company_array[i]))
+
+            # save file
+            wb.save("rieltors"+str(index)+"_"+str(index_last)+".xlsx")
+            wb.close()
+
+        except:
+            # create file
+            wb = Workbook()
+            ws = wb.active
+            ws['A1'] = "Name"
+            ws['B1'] = "Phones"
+            ws['C1'] = "Emails"
+            ws['D1'] = "State"
+            ws['E1'] = "City"
+            ws['F1'] = "ZIP"
+            ws['G1'] = "Company"
+
+            # save file with name
+            wb.save("rieltors"+str(index)+"_"+str(index_last)+".xlsx")
+
+            self.save_into_excel(index,index_last)
+
+        return index_last+1
+
+
+
+
 if __name__ == "__main__":
     rieltors = Rieltors()
-    # rieltors.read_csv_file()
-    # rieltors.create_file()
-    # rieltors.domain = "https://www.kw.com/search/location/ChIJY10Hv_i02YgRjdzvoWOVM6w-0.7420868142967443,Florida%2C%20Miami%2C%2033109,Miami%20Beach%2C%20FL%2033109%2C%20USA?fallBackCityAndState=Miami%20Beach%2C%20FL&fallBackPosition=25.7560139%2C%20-80.1344842&fallBackStreet=&isFallback=true&viewport=25.872362435965854%2C-80.1049454695791%2C25.826943802010476%2C-80.15103654929102&zoom=14"
-    # rieltors.goto()
+    rieltors.read_csv_file()
+    rieltors.create_file()
+    rieltors.domain = "https://www.kw.com/search/location/ChIJY10Hv_i02YgRjdzvoWOVM6w-0.7420868142967443,Florida%2C%20Miami%2C%2033109,Miami%20Beach%2C%20FL%2033109%2C%20USA?fallBackCityAndState=Miami%20Beach%2C%20FL&fallBackPosition=25.7560139%2C%20-80.1344842&fallBackStreet=&isFallback=true&viewport=25.872362435965854%2C-80.1049454695791%2C25.826943802010476%2C-80.15103654929102&zoom=14"
+    rieltors.goto()
     #
     # rieltors.remvoe_duplicate()
 
-    rieltors.read_csv_file2()
-    # rieltors.read_csv_file()
-    rieltors.zillow_requst()
+    # rieltors.read_csv_file2()
+    # # rieltors.read_csv_file()
+    # rieltors.zillow_requst()
 
     # rieltors.select_all_data_from_data_collection()
+    #
+    # rieltors.save_data_into_excel()
 
 
 
