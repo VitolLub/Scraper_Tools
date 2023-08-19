@@ -915,8 +915,8 @@ class ShopifyScrapper:
                     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
                 index += 1
                 print(f"Prim INDEX = {index}")
-                # if index == 5:
-                #     break
+                if index == 5:
+                    break
 
         elif len(all_categpries) > 0:
             index = 0
@@ -1482,6 +1482,21 @@ class ShopifyScrapper:
             print(response.status_code)
             # try:
             soup = bs(response.text, 'html.parser')
+            # find all a
+            links_a = soup.find_all('a')
+            for link in links_a:
+                if link is not None:
+                    try:
+                        ll = link.get('href')
+                        # print(ll)
+                        # find /https://
+                        htt_p = ll.find('/https://')
+                        resu = ll[htt_p+1:]
+                        link['href'] = resu
+                    except:
+                        pass
+
+
             try:
                 ceo_title = soup.find('meta', property='og:title')['content']
                 ceo_description = soup.find('meta', property='og:description')['content']
@@ -1632,14 +1647,15 @@ if __name__ == "__main__":
     shopify_scrapper.create_xls_file()
     if shopify_scrapper.webarchive == False:
         all_categpries = shopify_scrapper.get_menu_links()
-    # # # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
+    # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
+
     print(all_categpries)
     print(len(all_categpries))
     shopify_scrapper.scrap_shopify(all_categpries)
     shopify_scrapper.clean_duplicates()
-    # # # #
+    #
     # shopify_scrapper.scaping_collections_data(all_categpries)
-    # # # # get blog content data
+    # # # # # get blog content data
     # shopify_scrapper.get_blog_content()
 
 
