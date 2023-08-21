@@ -88,6 +88,7 @@ class ShopifyScrapper:
 
         self.primary_collections_site = ''
         self.related_collections_site = ''
+        self.variant_price_arr = []
 
 
 
@@ -415,26 +416,43 @@ class ShopifyScrapper:
             print("clena_bad_tags")
             soup_item = self.clena_bad_tags(soup_item)
 
-
-
             # get attributes data-product
             try:
-                product_data = soup_item.find('div', class_='product_form')
-                product_data = product_data['data-product']
-            except:
-                product_data = soup_item.find('script', id='ProductJson-product-template')
-                # remove script tag
-                # get only value
-                try:
-                    product_data = str(product_data.text)
-                except:
-                    product_data = False
+                product_data = ''
+                print('sizeChartsRelentless.product')
+                print(len(soup_item.find_all('script')))
+                if len(soup_item.find_all('script')) > 0:
+                    all_script = soup_item.find_all('script')
+                    for script in all_script:
+                        # print(script)
+                        if script is not None:
+                            scr = script.text
+                            print(scr.find('sizeChartsRelentless.product'))
+                            if scr.find('sizeChartsRelentless.product = ') != -1:
+                                print(f"scr.find True")
+                                s_pos = scr.find('sizeChartsRelentless.product')
+                                print(s_pos)
+                                product_data =  scr[s_pos+31:-1]
+                                # product_data = product_data.text
+                                print(product_data)
+                                break
+
+                elif soup_item.find('script', id='ProductJson-product-template') != -1:
+                    product_data = soup_item.find('script', id='ProductJson-product-template')
+                    product_data = product_data.text
+                else:
+                    product_data = soup_item.find('div', class_='product_form')
+                    product_data = product_data['data-product']
+                    product_data = product_data.text
+            except Exception as e:
+                print(e)
+                product_data = False
 
             if product_data != False:
                 images_arr = []
                 product_data = json.loads(product_data)
-                # print(product_data)
-
+                print(product_data)
+                quit()
                 # find all a
 
 
@@ -548,6 +566,7 @@ class ShopifyScrapper:
                             print(self.primary_collections_site)
                             print(self.related_collections_site)
                             print(f"===============================")
+                            self.variant_price_arr.append(self.cut_compare_price(product['price']))
 
                             self.product_hendler.append(product_handle)
                             self.id_by_id_arr.append(product['id'])
@@ -761,7 +780,7 @@ class ShopifyScrapper:
                 sheet.cell(row=next_row, column=39, value=str(option3))
                 sheet.cell(row=next_row, column=40, value=str(self.remove_webarchive_from_img(self.secure_url_arr[i])))
                 sheet.cell(row=next_row, column=41, value=str(''))
-                sheet.cell(row=next_row, column=42, value=str(self.price_arr[i]))
+                sheet.cell(row=next_row, column=42, value=str(self.variant_price_arr[i]))
                 next_row += 1
             except:
                 pass
@@ -915,8 +934,8 @@ class ShopifyScrapper:
                     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
                 index += 1
                 print(f"Prim INDEX = {index}")
-                if index == 5:
-                    break
+                # if index == 5:
+                #     break
 
         elif len(all_categpries) > 0:
             index = 0
@@ -1635,11 +1654,11 @@ class ShopifyScrapper:
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
     shopify_scrapper.webarchive = True
-    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210923060548/"
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210922145835/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-    shopify_scrapper.blog_name = "blog-du-japonais-kawaii"
+    shopify_scrapper.blog_name = "blog-vintage"
 
-    shopify_scrapper.domain = "https://www.univers-fleuri.com"
+    shopify_scrapper.domain = "https://vintage-styles.fr"
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
@@ -1653,9 +1672,9 @@ if __name__ == "__main__":
     print(len(all_categpries))
     shopify_scrapper.scrap_shopify(all_categpries)
     shopify_scrapper.clean_duplicates()
-    #
+
     # shopify_scrapper.scaping_collections_data(all_categpries)
-    # # # # # get blog content data
+    # # get blog content data
     # shopify_scrapper.get_blog_content()
 
 
