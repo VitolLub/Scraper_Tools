@@ -412,6 +412,7 @@ class ShopifyScrapper:
         # print(response_item)
         if response_item != False and response_item != None:
             soup_item = bs(response_item.text, 'html.parser')
+            just_text = response_item.text
 
 
 
@@ -424,7 +425,7 @@ class ShopifyScrapper:
                 product_data = ''
                 print('sizeChartsRelentless.product')
                 print(len(soup_item.find_all('script')))
-                if len(soup_item.find_all('script')) > 0:
+                if just_text.find('sizeChartsRelentless.produc') != -1:
                     all_script = soup_item.find_all('script')
                     for script in all_script:
                         # print(script)
@@ -455,219 +456,221 @@ class ShopifyScrapper:
 
             if product_data != False:
                 images_arr = []
-                product_data = json.loads(product_data)
-                # print(product_data)
-                # quit()
-                # find all a
-
-
-                produc_id = product_data['id']
-                product_title = product_data['title']
-                product_handle = product_data['handle']
-
-                published_at = product_data['published_at']
-                created_at = product_data['created_at']
-                vendor = product_data['vendor']
-                product_type = product_data['type']
-                tags = product_data['tags']
-                variants_arr = []
-                secure_url = ''
-                full_description_html_primary = ''
-                bullet_points_arr = []
-                primary_collections = ''
-                related_collections = ''
-
-                primary_collections,related_collections = self.get_collections_related(product_title,soup_item)
-                print(primary_collections,related_collections)
-                # quit()
-                full_description = product_data['description']
-                full_description = str(self.clena_bad_tags(bs(full_description, 'html.parser')))
-                total_description_html_arr = full_description
-
-
-                all_desc = bs(full_description, 'html.parser')
-
-                full_description_html_primary = ''
-                bullet_points_arr = []
-                related_col_arr = []
-                r = []
-                related_col_arr.append(r)
-
-
-                # find all a
-                all_a = soup_item.find_all('a')
-                collection = ''
-                for a in all_a:
-                    href = a.get('href')
-                    # print(f"Collection {href}")
-                    if href != None:
-                        if href.find('/collections/') != -1 and href.find(str(product_handle)) != -1:
-                            print(href)
-                            # cut collection from href
-                            c_p = href.find('/collections/')
-                            p_p = href.find('/product')
-                            collection = href[c_p+13:p_p]
-                            print(f"Real collection {collection}")
-                            break
-                print(collection)
                 try:
-                    # print('a')
-                    full_description_html_primary, bullet_points_arr, related_col_arr = self.cut_full_description(soup_item,full_description)
-                except Exception as e:
-                    # display a line of error
-                    print(e)
-                    print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
-
-                index = 0
-                h2_html_origin = ''
-                for h2 in all_desc.find_all('h2'):
-                    if index == 0:
-                        # remove style attr from h2
-                        del h2['style']
-                        del h2['class']
-                        # remove all css style
-                        h2_html_origin = str(h2)
-
-                    h2.decompose()
-                    index += 1
-                    break
+                    product_data = json.loads(product_data)
 
 
-                full_description = bs(full_description, 'html.parser').text
 
-                # get title from head
-                ceo_title = soup_item.find('title').text
-                ceo_title = ceo_title.strip()
-                try:
-                    ceo_description = soup_item.find('meta', {'name': 'description'})['content']
-                except:
-                    ceo_description = soup_item.find('meta', {'property': 'og:description'})['content']
+                    produc_id = product_data['id']
+                    product_title = product_data['title']
+                    product_handle = product_data['handle']
 
-                images = product_data['images']
+                    published_at = product_data['published_at']
+                    created_at = product_data['created_at']
+                    vendor = product_data['vendor']
+                    product_type = product_data['type']
+                    tags = product_data['tags']
+                    variants_arr = []
+                    secure_url = ''
+                    full_description_html_primary = ''
+                    bullet_points_arr = []
+                    primary_collections = ''
+                    related_collections = ''
 
-                for img in images:
-                    images_arr.append(img)
+                    primary_collections,related_collections = self.get_collections_related(product_title,soup_item)
+                    print(primary_collections,related_collections)
+                    # quit()
+                    full_description = product_data['description']
+                    full_description = str(self.clena_bad_tags(bs(full_description, 'html.parser')))
+                    total_description_html_arr = full_description
 
 
-                title_html = soup_item.find('h1')
+                    all_desc = bs(full_description, 'html.parser')
 
-                data_value_list = []
+                    full_description_html_primary = ''
+                    bullet_points_arr = []
+                    related_col_arr = []
+                    r = []
+                    related_col_arr.append(r)
 
-                id_by_id = product_data['id']
-                vendor = product_data['vendor']
-                type = product_data['type']
-                tags = product_data['tags']
 
-                for product in product_data['variants']:
-                    if product['id'] not in self.dublicate:
-                        try:
-                            secure_url = ''
-                            self.dublicate.append(product['id'])
+                    # find all a
+                    all_a = soup_item.find_all('a')
+                    collection = ''
+                    for a in all_a:
+                        href = a.get('href')
+                        # print(f"Collection {href}")
+                        if href != None:
+                            if href.find('/collections/') != -1 and href.find(str(product_handle)) != -1:
+                                print(href)
+                                # cut collection from href
+                                c_p = href.find('/collections/')
+                                p_p = href.find('/product')
+                                collection = href[c_p+13:p_p]
+                                print(f"Real collection {collection}")
+                                break
+                    print(collection)
+                    try:
+                        # print('a')
+                        full_description_html_primary, bullet_points_arr, related_col_arr = self.cut_full_description(soup_item,full_description)
+                    except Exception as e:
+                        # display a line of error
+                        print(e)
+                        print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
 
-                            self.primary_collections_site = primary_collections
-                            if primary_collections != related_collections:
-                                if len(related_collections) > 2:
-                                    self.related_collections_site = primary_collections+","+related_collections
-                                else:
-                                    self.related_collections_site = primary_collections
-                            else:
-                                self.related_collections_site = related_collections
+                    index = 0
+                    h2_html_origin = ''
+                    for h2 in all_desc.find_all('h2'):
+                        if index == 0:
+                            # remove style attr from h2
+                            del h2['style']
+                            del h2['class']
+                            # remove all css style
+                            h2_html_origin = str(h2)
 
-                            print(f"===============================")
-                            print(self.primary_collections_site)
-                            print(self.related_collections_site)
-                            print(f"===============================")
-                            self.variant_price_arr.append(self.cut_compare_price(product['price']))
+                        h2.decompose()
+                        index += 1
+                        break
 
-                            self.product_hendler.append(product_handle)
-                            self.id_by_id_arr.append(product['id'])
-                            self.product_name_arr.append(product_title)
-                            self.total_description_html_arr.append(str(self.remove_all_css_style(total_description_html_arr)))
-                            self.clean_description_html_arr.append(self.remove_all_css_style(full_description_html_primary))
-                            self.full_description_html_arr.append(self.remove_all_css_style(full_description_html_primary))
-                            self.price_arr.append(self.cut_compare_price(product_data['price']))
-                            self.price_min_arr.append(self.cut_compare_price(product_data['price_min']))
-                            self.price_max_arr.append(self.cut_compare_price(product_data['price_max']))
-                            self.full_link_arr.append(link_by_item)
-                            self.data_value_list_arr.append(data_value_list)
-                            self.variants_arr.append(','.join(variants_arr))
-                            self.collection_value.append(collection)
-                            # title section
-                            self.title_arr.append(product_title)
-                            self.title_html_arr.append(title_html)
-                            self.ceo_title_arr.append(ceo_title)
-                            self.ceo_description_arr.append(ceo_description)
-                            self.full_description_html_arr.append(full_description_html_primary)
-                            self.bullet_points_arr.append(bullet_points_arr)
+
+                    full_description = bs(full_description, 'html.parser').text
+
+                    # get title from head
+                    ceo_title = soup_item.find('title').text
+                    ceo_title = ceo_title.strip()
+                    try:
+                        ceo_description = soup_item.find('meta', {'name': 'description'})['content']
+                    except:
+                        ceo_description = soup_item.find('meta', {'property': 'og:description'})['content']
+
+                    images = product_data['images']
+
+                    for img in images:
+                        images_arr.append(img)
+
+
+                    title_html = soup_item.find('h1')
+
+                    data_value_list = []
+
+                    id_by_id = product_data['id']
+                    vendor = product_data['vendor']
+                    type = product_data['type']
+                    tags = product_data['tags']
+
+                    for product in product_data['variants']:
+                        if product['id'] not in self.dublicate:
                             try:
-                                secure_url = 'https:' + str(product['featured_image']['src'])
-                            except:
                                 secure_url = ''
+                                self.dublicate.append(product['id'])
 
-                            variants = []
-                            if product['option1'] == None:
-                                variants.append('')
-                            else:
-                                variants.append(product['option1'])
+                                self.primary_collections_site = primary_collections
+                                if primary_collections != related_collections:
+                                    if len(related_collections) > 2:
+                                        self.related_collections_site = primary_collections+","+related_collections
+                                    else:
+                                        self.related_collections_site = primary_collections
+                                else:
+                                    self.related_collections_site = related_collections
 
-                            if product['option2'] == None:
-                                variants.append('')
-                            else:
-                                variants.append(product['option2'])
+                                print(f"===============================")
+                                print(self.primary_collections_site)
+                                print(self.related_collections_site)
+                                print(f"===============================")
+                                self.variant_price_arr.append(self.cut_compare_price(product['price']))
 
-                            if product['option3'] == None:
-                                variants.append('')
-                            else:
-                                variants.append(product['option3'])
+                                self.product_hendler.append(product_handle)
+                                self.id_by_id_arr.append(product['id'])
+                                self.product_name_arr.append(product_title)
+                                self.total_description_html_arr.append(str(self.remove_all_css_style(total_description_html_arr)))
+                                self.clean_description_html_arr.append(self.remove_all_css_style(full_description_html_primary))
+                                self.full_description_html_arr.append(self.remove_all_css_style(full_description_html_primary))
+                                self.price_arr.append(self.cut_compare_price(product_data['price']))
+                                self.price_min_arr.append(self.cut_compare_price(product_data['price_min']))
+                                self.price_max_arr.append(self.cut_compare_price(product_data['price_max']))
+                                self.full_link_arr.append(link_by_item)
+                                self.data_value_list_arr.append(data_value_list)
+                                self.variants_arr.append(','.join(variants_arr))
+                                self.collection_value.append(collection)
+                                # title section
+                                self.title_arr.append(product_title)
+                                self.title_html_arr.append(title_html)
+                                self.ceo_title_arr.append(ceo_title)
+                                self.ceo_description_arr.append(ceo_description)
+                                self.full_description_html_arr.append(full_description_html_primary)
+                                self.bullet_points_arr.append(bullet_points_arr)
+                                try:
+                                    secure_url = 'https:' + str(product['featured_image']['src'])
+                                except:
+                                    secure_url = ''
+
+                                variants = []
+                                if product['option1'] == None:
+                                    variants.append('')
+                                else:
+                                    variants.append(product['option1'])
+
+                                if product['option2'] == None:
+                                    variants.append('')
+                                else:
+                                    variants.append(product['option2'])
+
+                                if product['option3'] == None:
+                                    variants.append('')
+                                else:
+                                    variants.append(product['option3'])
 
 
-                            self.related_collections_handle_arr.append(product_handle)
-                            # print(related_col_arr)
-                            # if len(related_col_arr[0]) == 0:
-                            #     hh_arr = []
-                            #     hh_arr.append(product_handle)
-                            #     self.handle_arr.append(hh_arr)
-                            # else:
-                            #     self.handle_arr.append(related_col_arr)
-                            hh = []
-                            hh.append(product_handle)
-                            # print(f"product_handle {product_handle}")
-                            self.handle_arr.append(hh)
-                            self.full_description_arr.append(full_description)
+                                self.related_collections_handle_arr.append(product_handle)
+                                # print(related_col_arr)
+                                # if len(related_col_arr[0]) == 0:
+                                #     hh_arr = []
+                                #     hh_arr.append(product_handle)
+                                #     self.handle_arr.append(hh_arr)
+                                # else:
+                                #     self.handle_arr.append(related_col_arr)
+                                hh = []
+                                hh.append(product_handle)
+                                # print(f"product_handle {product_handle}")
+                                self.handle_arr.append(hh)
+                                self.full_description_arr.append(full_description)
 
-                            try:
-                                self.imge_primary_arr.append(images_arr[0])
-                            except:
-                                self.imge_primary_arr.append('')
+                                try:
+                                    self.imge_primary_arr.append(images_arr[0])
+                                except:
+                                    self.imge_primary_arr.append('')
 
-                            self.images_arr_variant.append(images_arr[0])
-                            self.images_arr.append(','.join(images_arr))
-                            self.variants_arr_primary.append(variants)
-                            self.h2_html_arr.append(str(self.remove_all_css_style(h2_html_origin)))
-                            self.product_id_arr.append(id_by_id)
-                            self.tags_arr.append(','.join(tags))
-                            self.vendor_arr.append(vendor)
-                            self.type_arr.append(type)
-                            self.secure_url_arr.append(secure_url)
+                                self.images_arr_variant.append(images_arr[0])
+                                self.images_arr.append(','.join(images_arr))
+                                self.variants_arr_primary.append(variants)
+                                self.h2_html_arr.append(str(self.remove_all_css_style(h2_html_origin)))
+                                self.product_id_arr.append(id_by_id)
+                                self.tags_arr.append(','.join(tags))
+                                self.vendor_arr.append(vendor)
+                                self.type_arr.append(type)
+                                self.secure_url_arr.append(secure_url)
 
-                            self.published_at.append(product_data['published_at'])
-                            self.created_at.append(product_data['created_at'])
-                            self.available_arr.append(product_data['available'])
-                            self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
-                            self.price_varies_arr.append(product_data['price_varies'])
+                                self.published_at.append(product_data['published_at'])
+                                self.created_at.append(product_data['created_at'])
+                                self.available_arr.append(product_data['available'])
+                                self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
+                                self.price_varies_arr.append(product_data['price_varies'])
 
-                            if str(product_data['compare_at_price']) != 'None':
-                                self.compare_at_price_arr.append(self.cut_compare_price(product_data['compare_at_price']))
-                            else:
-                                self.compare_at_price_arr.append(product_data['compare_at_price'])
+                                if str(product_data['compare_at_price']) != 'None':
+                                    self.compare_at_price_arr.append(self.cut_compare_price(product_data['compare_at_price']))
+                                else:
+                                    self.compare_at_price_arr.append(product_data['compare_at_price'])
 
-                            if product_data['compare_at_price_max'] == 'None':
-                                self.compare_at_price_max_arr.append(product_data['compare_at_price_max'])
-                            else:
-                                self.compare_at_price_max_arr.append(self.cut_compare_price(product_data['compare_at_price_max']))
-                        except Exception as e:
-                            print(e)
-                            print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
+                                if product_data['compare_at_price_max'] == 'None':
+                                    self.compare_at_price_max_arr.append(product_data['compare_at_price_max'])
+                                else:
+                                    self.compare_at_price_max_arr.append(self.cut_compare_price(product_data['compare_at_price_max']))
+                            except Exception as e:
+                                print(e)
+                                print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
+                except:
+                    pass
+
 
 
 
@@ -1138,7 +1141,7 @@ class ShopifyScrapper:
             if ids not in products_arr:
                 products_arr.append(ids)
             indexs += 1
-
+        print(f"Products count {len(products_arr)}")
         sheet['A'+str(indexs+1)] = f"Products count {len(products_arr)}"
         wb.save("shopify2.xlsx")
         wb.close()
@@ -1672,88 +1675,37 @@ class ShopifyScrapper:
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
     shopify_scrapper.webarchive = True
-    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210922145835/"
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20220703153727/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-    shopify_scrapper.blog_name = "blog-vintage"
+    shopify_scrapper.blog_name = "blog-du-japonais-kawaii"
 
-    # shopify_scrapper.domain = "https://vintage-styles.fr"
-    # all_categpries = []
-    # if shopify_scrapper.webarchive == True:
-    #     shopify_scrapper.scrap_webarchive()
-    #
-    # shopify_scrapper.create_xls_file()
-    # if shopify_scrapper.webarchive == False:
-    #     all_categpries = shopify_scrapper.get_menu_links()
+    shopify_scrapper.domain = "https://kaneki-shop.com"
+    all_categpries = []
+    if shopify_scrapper.webarchive == True:
+        shopify_scrapper.scrap_webarchive()
+
+    shopify_scrapper.create_xls_file()
+    if shopify_scrapper.webarchive == False:
+        all_categpries = shopify_scrapper.get_menu_links()
     # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
     #
     # print(all_categpries)
     # print(len(all_categpries))
     # shopify_scrapper.scrap_shopify(all_categpries)
-    shopify_scrapper.clean_duplicates()
+    # shopify_scrapper.clean_duplicates()
     #
-    # shopify_scrapper.scaping_collections_data(all_categpries)
+    shopify_scrapper.scaping_collections_data(all_categpries)
     # get blog content data
     # shopify_scrapper.get_blog_content()
 
 
 
-    # # collections = ['/web/collections//https://www.univers-fleuri.com', '/web/20220522140232/https://www.univers-fleuri.com/collections/accessoires', '/web/20230129135437/https://www.univers-fleuri.com/collections/bague-fleur', '/web/20220331203543/https://www.univers-fleuri.com/collections/bague-fleur.atom', '/web/20220119070901/https://www.univers-fleuri.com/collections/bijoux-fleur', '/web/20220525045751/https://www.univers-fleuri.com/collections/bracelet-fleur', '/web/20220525032842/https://www.univers-fleuri.com/collections/chapeaux', '/web/20220525035329/https://www.univers-fleuri.com/collections/chemises-fleurs', '/web/20220119134805/https://www.univers-fleuri.com/collections/collier-fleur', '/web/20220525050000/https://www.univers-fleuri.com/collections/couronnes-de-fleurs', '/web/20220525032729/https://www.univers-fleuri.com/collections/decoration-florale', '/web/20220119134847/https://www.univers-fleuri.com/collections/fleurs-artificielles', '/web/20220119125746/https://www.univers-fleuri.com/collections/fleurs-sechees', '/web/20220119072750/https://www.univers-fleuri.com/collections/jupe-longues-fleurie', '/web/20220525045923/https://www.univers-fleuri.com/collections/maillot-de-bain', '/web/20220117004311/https://www.univers-fleuri.com/collections/nouvelle-collection', '/web/20220117011430/https://www.univers-fleuri.com/collections/pantalons-fleuri', '/web/20220522140821/https://www.univers-fleuri.com/collections/pull-fleuri', '/web/20220116101415/https://www.univers-fleuri.com/collections/robes-courtes-fleuries', '/web/20220522140046/https://www.univers-fleuri.com/collections/robes-fleuries', '/web/20220518132946/https://www.univers-fleuri.com/collections/robes-longues-fleuries', '/web/20210306021817/https://www.univers-fleuri.com/collections/robes-longues-fleuries/fleur-de-cerisier', '/web/20220117021612/https://www.univers-fleuri.com/collections/sacs-fleuris', '/web/20230808101554/https://www.univers-fleuri.com/collections/t-shirt-floral', '/web/20220119150142/https://www.univers-fleuri.com/collections/tableaux-fleurs', '/web/20220518142056/https://www.univers-fleuri.com/collections/tatouages-ephemeres', '/web/20220525030413/https://www.univers-fleuri.com/collections/top-fleuri', '/web/20220116105451/https://www.univers-fleuri.com/collections/vetements-fleuris']
-    # products = ['/web/20220518130525/https://www.univers-fleuri.com/products/2-roses-eternelles', '/web/20220116111500/https://www.univers-fleuri.com/products/anneau-de-marguerite', '/web/20220518131051/https://www.univers-fleuri.com/products/anneau-fleur-de-lys-cristal', '/web/20210803103052/https://www.univers-fleuri.com/products/anneau-fleuri', '/web/20220522145927/https://www.univers-fleuri.com/products/anneaux-de-fleur-sechees-en-resine', '/web/20220116100445/https://www.univers-fleuri.com/products/arrangement-floral', '/web/20220116102254/https://www.univers-fleuri.com/products/asters-colorees-artificielles', '/web/20220119134010/https://www.univers-fleuri.com/products/bague-anneau-fleuri', '/web/20220522145450/https://www.univers-fleuri.com/products/bague-anneau-floral', '/web/20220119143001/https://www.univers-fleuri.com/products/bague-argent-fleur-blanche', '/web/20220119131722/https://www.univers-fleuri.com/products/bague-argent-fleur-de-lotus', '/web/20220119135235/https://www.univers-fleuri.com/products/bague-avec-fleur', '/web/20220119144809/https://www.univers-fleuri.com/products/bague-avec-lotus', '/web/20220117012551/https://www.univers-fleuri.com/products/bague-avec-petites-fleurs', '/web/20220116111740/https://www.univers-fleuri.com/products/bague-avec-petites-fleurs-bleues', '/web/20220117004621/https://www.univers-fleuri.com/products/bague-belle-fleur-blanche', '/web/20220119141715/https://www.univers-fleuri.com/products/bague-belle-fleur-rose', '/web/20220119150148/https://www.univers-fleuri.com/products/bague-bourgeon-argent', '/web/20220116102348/https://www.univers-fleuri.com/products/bague-branche', '/web/20220522143203/https://www.univers-fleuri.com/products/bague-branche-darbre', '/web/20220525030329/https://www.univers-fleuri.com/products/bague-branche-fleurie', '/web/20220117003013/https://www.univers-fleuri.com/products/bague-branche-fleurie-de-zirconium', '/web/20220119150154/https://www.univers-fleuri.com/products/bague-coquelicot-en-argent', '/web/20220119125641/https://www.univers-fleuri.com/products/bague-couronne-de-fleur', '/web/20220117001210/https://www.univers-fleuri.com/products/bague-couronne-de-fleur-et-papillon', '/web/20220522142400/https://www.univers-fleuri.com/products/bague-de-rose-eternelle', '/web/20220119145515/https://www.univers-fleuri.com/products/bague-en-forme-de-fleur', '/web/20220119141124/https://www.univers-fleuri.com/products/bague-epine', '/web/20220116101047/https://www.univers-fleuri.com/products/bague-femme-fleur-de-lotus', '/web/20220518141704/https://www.univers-fleuri.com/products/bague-femme-marguerite', '/web/20220518125746/https://www.univers-fleuri.com/products/bague-fleur-avec-coeur', '/web/20220117001959/https://www.univers-fleuri.com/products/bague-fleur-avec-pendentif', '/web/20220119145308/https://www.univers-fleuri.com/products/bague-fleur-avec-pendentif-1', '/web/20220525034751/https://www.univers-fleuri.com/products/bague-fleur-avec-pendentif-bleu', '/web/20220525032531/https://www.univers-fleuri.com/products/bague-fleur-avec-petales-dopales', '/web/20220117014010/https://www.univers-fleuri.com/products/bague-fleur-avec-pierre', '/web/20220525041951/https://www.univers-fleuri.com/products/bague-fleur-avec-pierre-1', '/web/20220116105520/https://www.univers-fleuri.com/products/bague-fleur-avec-pierre-ovale', '/web/20220119143839/https://www.univers-fleuri.com/products/bague-fleur-blanche', '/web/20220116101443/https://www.univers-fleuri.com/products/bague-fleur-boheme', '/web/20220116110628/https://www.univers-fleuri.com/products/bague-fleur-branche-florale', '/web/20220518135122/https://www.univers-fleuri.com/products/bague-fleur-croisee', '/web/20220518130735/https://www.univers-fleuri.com/products/bague-fleur-de-bougainvillier', '/web/20210728163742/https://www.univers-fleuri.com/products/bague-fleur-de-lotus-et-nenuphare', '/web/20220525033118/https://www.univers-fleuri.com/products/bague-fleur-de-lys-argent', '/web/20220117022220/https://www.univers-fleuri.com/products/bague-fleur-de-lys-argent-femme', '/web/20220518121704/https://www.univers-fleuri.com/products/bague-fleur-de-lys-minimaliste', '/web/20220525042046/https://www.univers-fleuri.com/products/bague-fleur-de-lys-or', '/web/20220525045917/https://www.univers-fleuri.com/products/bague-fleur-doree', '/web/20220117014316/https://www.univers-fleuri.com/products/bague-fleur-double-anneaux', '/web/20220117022316/https://www.univers-fleuri.com/products/bague-fleur-en-lot', '/web/20220518120803/https://www.univers-fleuri.com/products/bague-fleur-en-or', '/web/20220116111626/https://www.univers-fleuri.com/products/bague-fleur-lavande', '/web/20220518120416/https://www.univers-fleuri.com/products/bague-fleur-lot-perfection', '/web/20220116110207/https://www.univers-fleuri.com/products/bague-fleur-marguerite', '/web/20220525031739/https://www.univers-fleuri.com/products/bague-fleur-marguerite-colore', '/web/20220119083739/https://www.univers-fleuri.com/products/bague-fleur-noire', '/web/20220522134403/https://www.univers-fleuri.com/products/bague-fleur-noire-1', '/web/20220117005606/https://www.univers-fleuri.com/products/bague-fleur-ondulee', '/web/20220116111422/https://www.univers-fleuri.com/products/bague-fleur-ornement-de-rose', '/web/20220525031156/https://www.univers-fleuri.com/products/bague-fleur-papillon', '/web/20220116111435/https://www.univers-fleuri.com/products/bague-fleur-pas-chere', '/web/20220518140114/https://www.univers-fleuri.com/products/bague-fleur-perle-1', '/web/20220525033427/https://www.univers-fleuri.com/products/bague-fleur-petales', '/web/20220117013514/https://www.univers-fleuri.com/products/bague-fleur-pierre-scintillante', '/web/20220522141922/https://www.univers-fleuri.com/products/bague-fleur-pissenlit', '/web/20220518131520/https://www.univers-fleuri.com/products/bague-fleur-rose', '/web/20220518140930/https://www.univers-fleuri.com/products/bague-fleur-rose-1', '/web/20220525025033/https://www.univers-fleuri.com/products/bague-fleur-rose-orange', '/web/20220116110640/https://www.univers-fleuri.com/products/bague-fleur-set-bleu', '/web/20220119143501/https://www.univers-fleuri.com/products/bague-fleur-zircon-diamant', '/web/20220117015506/https://www.univers-fleuri.com/products/bague-fleurie-argent', '/web/20220518124537/https://www.univers-fleuri.com/products/bague-liane', '/web/20220525041341/https://www.univers-fleuri.com/products/bague-liane-argent', '/web/20220117021318/https://www.univers-fleuri.com/products/bague-liane-de-fleur', '/web/20220525030458/https://www.univers-fleuri.com/products/bague-marguerite-argent', '/web/20220119141915/https://www.univers-fleuri.com/products/bague-metal-fleur', '/web/20220117015915/https://www.univers-fleuri.com/products/bague-or-fleur-de-lys', '/web/20220525050140/https://www.univers-fleuri.com/products/bague-petite-liane-fleurie', '/web/20220116104618/https://www.univers-fleuri.com/products/bague-reine-des-fleurs', '/web/20220525025900/https://www.univers-fleuri.com/products/bague-ronce-argent', '/web/20220518142141/https://www.univers-fleuri.com/products/bague-rose-argent', '/web/20220119134247/https://www.univers-fleuri.com/products/bague-rose-argent-1', '/web/20220116111429/https://www.univers-fleuri.com/products/bague-rose-diamant', '/web/20220117021057/https://www.univers-fleuri.com/products/bague-rose-solitaire', '/web/20220119131802/https://www.univers-fleuri.com/products/bague-style-fleur', '/web/20220525031901/https://www.univers-fleuri.com/products/bague-trefle-a-quatre-feuille', '/web/20220525041548/https://www.univers-fleuri.com/products/bijou-fleur-de-lys', '/web/20220116093703/https://www.univers-fleuri.com/products/bijou-fleur-de-lys-en-or', '/web/20220525050044/https://www.univers-fleuri.com/products/bijoux-femme-lotus', '/web/20220119135948/https://www.univers-fleuri.com/products/bijoux-fleur-argent', '/web/20220119141756/https://www.univers-fleuri.com/products/bijoux-marguerite-argente', '/web/20220116111531/https://www.univers-fleuri.com/products/bob-fleuri', '/web/20220116094342/https://www.univers-fleuri.com/products/bob-marguerite', '/web/20220119145133/https://www.univers-fleuri.com/products/bouquet-de-fleurs-sechees', '/web/20220119135356/https://www.univers-fleuri.com/products/bouquet-de-pivoine-et-hortensia-artificielles', '/web/20220117011346/https://www.univers-fleuri.com/products/bracelet-argent-fleur-de-lys', '/web/20220116111601/https://www.univers-fleuri.com/products/bracelet-avec-marguerite', '/web/20220117022334/https://www.univers-fleuri.com/products/bracelet-avec-tournesol', '/web/20220117022309/https://www.univers-fleuri.com/products/bracelet-cordon-fleur']
-    # inx = 0
-    # for product in products:
-    #
-    #     full_link = shopify_scrapper.webarchive_url_domain + product
-    #     print(full_link)
-    #     reque = requests.get(full_link, timeout=90)
-    #     # print(reque)
-    #     if reque.status_code == 200:
-    #         # print(reque.text)
-    #
-    #         soup_item = bs(reque.text, 'html.parser')
-    #         product_data = soup_item.find('script', id='ProductJson-product-template')
-    #
-    #         jspn_data = json.loads(product_data.text)
-    #         title_arr = jspn_data['title'].split('<br>')
-    #         print("+================")
-    #         print(title_arr[0])
-    #         print("+================")
-    #
-    #         all_a = soup_item.find_all('a')
-    #         primary_collections = ''
-    #         related_collections = ''
-    #         diff_percent_arr = {}
-    #         for a in all_a:
-    #             if a != None:
-    #                 href = a.get('href')
-    #                 a_text = a.text
-    #                 if href is not None and href.find('/collections/') != -1:
-    #                     # print(href)
-    #                     # print(a_text)
-    #                     percent = SequenceMatcher(None, title_arr[0], a_text).ratio()
-    #                     diff_percent_arr[href] = percent
-    #                     # quit()
-    #         # print(diff_percent_arr)
-    #         primary_collection = max(diff_percent_arr, key=diff_percent_arr.get)
-    #         primary_collections = shopify_scrapper.clean_collections(primary_collection)
-    #         print(f"primary_collections {primary_collections}")
-    #         # find primary_collection in soup
-    #         for aa in all_a:
-    #             if aa is not None:
-    #                 # print(aa)
-    #                 try:
-    #                     if aa.get('href') == primary_collection:
-    #                         # find ul data
-    #                         shopify_scrapper.find_ul_data(aa,related_collections)
-    #
-    #                         # print(super_parent)
-    #                         # quit()
-    #                 except:
-    #                     pass
-    #
-    #     inx+= 1
-    #     if inx > 5:
-    #         # break
-    #         quit()
+    """
+    vintage-styles.fr - 360
+    univers fleuri  - 874
+    le-japonais-kawaii.com - 309
+    https://kaneki-shop.com - 535
+    """
 
 
 
