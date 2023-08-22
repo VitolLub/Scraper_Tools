@@ -368,15 +368,18 @@ class ShopifyScrapper:
             if a != None:
                 href = a.get('href')
                 a_text = a.text
-                if href is not None and href.find('/collections/') != -1:
+                if href is not None and href.find('/collections/') != -1 or href.find('/pages/') != -1:
                     # print(href)
                     # print(a_text)
                     percent = SequenceMatcher(None, title_arr[0], a_text).ratio()
                     diff_percent_arr[href] = percent
                     # quit()
         # print(diff_percent_arr)
-        primary_collection = max(diff_percent_arr, key=diff_percent_arr.get)
-        primary_collections = self.clean_collections(primary_collection)
+        try:
+            primary_collection = max(diff_percent_arr, key=diff_percent_arr.get)
+            primary_collections = self.clean_collections(primary_collection)
+        except:
+            pass
 
 
         print(f"primary_collections {primary_collections}")
@@ -427,14 +430,16 @@ class ShopifyScrapper:
                         # print(script)
                         if script is not None:
                             scr = script.text
-                            print(scr.find('sizeChartsRelentless.product'))
+                            # print(scr.find('sizeChartsRelentless.product'))
                             if scr.find('sizeChartsRelentless.product = ') != -1:
-                                print(f"scr.find True")
+                                # print(f"scr.find True")
                                 s_pos = scr.find('sizeChartsRelentless.product')
-                                print(s_pos)
-                                product_data =  scr[s_pos+31:-1]
+                                e_pos = scr.find('sizeChartsRelentless.productCollection')
+                                # print(s_pos)
+                                scr = scr.strip()
+                                product_data =  scr[s_pos+30:e_pos-3]
                                 # product_data = product_data.text
-                                print(product_data)
+                                # print(product_data)
                                 break
 
                 elif soup_item.find('script', id='ProductJson-product-template') != -1:
@@ -451,8 +456,8 @@ class ShopifyScrapper:
             if product_data != False:
                 images_arr = []
                 product_data = json.loads(product_data)
-                print(product_data)
-                quit()
+                # print(product_data)
+                # quit()
                 # find all a
 
 
@@ -474,7 +479,7 @@ class ShopifyScrapper:
 
                 primary_collections,related_collections = self.get_collections_related(product_title,soup_item)
                 print(primary_collections,related_collections)
-
+                # quit()
                 full_description = product_data['description']
                 full_description = str(self.clena_bad_tags(bs(full_description, 'html.parser')))
                 total_description_html_arr = full_description
@@ -533,7 +538,10 @@ class ShopifyScrapper:
                 # get title from head
                 ceo_title = soup_item.find('title').text
                 ceo_title = ceo_title.strip()
-                ceo_description = soup_item.find('meta', {'name': 'description'})['content']
+                try:
+                    ceo_description = soup_item.find('meta', {'name': 'description'})['content']
+                except:
+                    ceo_description = soup_item.find('meta', {'property': 'og:description'})['content']
 
                 images = product_data['images']
 
@@ -558,7 +566,10 @@ class ShopifyScrapper:
 
                             self.primary_collections_site = primary_collections
                             if primary_collections != related_collections:
-                                self.related_collections_site = primary_collections+","+related_collections
+                                if len(related_collections) > 2:
+                                    self.related_collections_site = primary_collections+","+related_collections
+                                else:
+                                    self.related_collections_site = primary_collections
                             else:
                                 self.related_collections_site = related_collections
 
@@ -1228,10 +1239,10 @@ class ShopifyScrapper:
                         fff_link = self.webarchive_url_domain + link
                         print(fff_link)
 
-                        page.goto(self.webarchive_url_domain + link, timeout=100000)
+                        page.goto(self.webarchive_url_domain + link, timeout=200000)
                     else:
                         fff_link = self.domain + link
-                        page.goto(self.domain+link, timeout=100000)
+                        page.goto(self.domain+link, timeout=200000)
 
                     # get html content
                     html = page.content()
@@ -1567,7 +1578,7 @@ class ShopifyScrapper:
 
 
             all_pages = int(all_pages)
-            print(all_pages)
+            # print(all_pages)
 
 
             # get html content
@@ -1593,14 +1604,14 @@ class ShopifyScrapper:
             # print(link)
             link = link.get('href')
             if link != None and link.find(self.domain) != -1:
-                print(link)
+                # print(link)
                 if link.find("?page=") == -1:
                     try:
                         link = link.replace('*','')
                     except:
                         link = link
                     if link.find('/blogs/') != -1 and link.find('?page=') == -1:
-                        print('Done')
+                        # print('Done')
                         if link not in self.super_webarchive_blog_links:
                             self.super_webarchive_blog_links.append(link)
                     elif link.find('/products/') != -1 and link.find('/collections/') == -1:
@@ -1631,16 +1642,23 @@ class ShopifyScrapper:
             ul.decompose()
             # print(super_parent)
             # find a tag in super_parent
+            # print(super_parent)
             a = super_parent.find('a')
             if a is not None:
                 other_collection = a.get('href')
-                clean_collections = self.clean_collections(other_collection)
-                if len(related_collections) == 0:
-                    related_collections += clean_collections
-                else:
-                    related_collections += ","+clean_collections
-                print(f"Related collections {related_collections}")
+                if related_collections.find('/collections/') != -1:
+                    clean_collections = self.clean_collections(other_collection)
+                    clean_collections = clean_collections.replace('#','')
 
+                    if len(related_collections) == 0 and len(clean_collections.strip()) > 2:
+                        related_collections += clean_collections
+                    elif len(clean_collections.strip()) > 4:
+                        add_to_collection = ","+clean_collections
+                        if len(add_to_collection) > 2:
+                            related_collections += add_to_collection
+                    print(f"Related collections {related_collections} and clean_collections {clean_collections} and {len(clean_collections.strip())}")
+                else:
+                    related_collections = self.find_ul_data(super_parent, related_collections)
 
         else:
             # call patern
@@ -1658,23 +1676,23 @@ if __name__ == "__main__":
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
     shopify_scrapper.blog_name = "blog-vintage"
 
-    shopify_scrapper.domain = "https://vintage-styles.fr"
-    all_categpries = []
-    if shopify_scrapper.webarchive == True:
-        shopify_scrapper.scrap_webarchive()
-
-    shopify_scrapper.create_xls_file()
-    if shopify_scrapper.webarchive == False:
-        all_categpries = shopify_scrapper.get_menu_links()
-    # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
-
-    print(all_categpries)
-    print(len(all_categpries))
-    shopify_scrapper.scrap_shopify(all_categpries)
+    # shopify_scrapper.domain = "https://vintage-styles.fr"
+    # all_categpries = []
+    # if shopify_scrapper.webarchive == True:
+    #     shopify_scrapper.scrap_webarchive()
+    #
+    # shopify_scrapper.create_xls_file()
+    # if shopify_scrapper.webarchive == False:
+    #     all_categpries = shopify_scrapper.get_menu_links()
+    # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
+    #
+    # print(all_categpries)
+    # print(len(all_categpries))
+    # shopify_scrapper.scrap_shopify(all_categpries)
     shopify_scrapper.clean_duplicates()
-
+    #
     # shopify_scrapper.scaping_collections_data(all_categpries)
-    # # get blog content data
+    # get blog content data
     # shopify_scrapper.get_blog_content()
 
 
