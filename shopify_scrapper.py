@@ -368,18 +368,21 @@ class ShopifyScrapper:
             if a != None:
                 href = a.get('href')
                 a_text = a.text
-                if href is not None and href.find('/collections/') != -1 or href.find('/pages/') != -1:
-                    # print(href)
-                    # print(a_text)
-                    percent = SequenceMatcher(None, title_arr[0], a_text).ratio()
-                    diff_percent_arr[href] = percent
-                    # quit()
+                if href is not None:
+                    if href.find('/collections/') != -1 or href.find('/pages/') != -1:
+                        # print(href)
+                        # print(a_text)
+                        percent = SequenceMatcher(None, title_arr[0], a_text).ratio()
+                        diff_percent_arr[href] = percent
+                        # quit()
         # print(diff_percent_arr)
         try:
             primary_collection = max(diff_percent_arr, key=diff_percent_arr.get)
             primary_collections = self.clean_collections(primary_collection)
-        except:
-            pass
+
+        except Exception as e:
+            print(e)
+            print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
 
 
         print(f"primary_collections {primary_collections}")
@@ -476,9 +479,12 @@ class ShopifyScrapper:
                     bullet_points_arr = []
                     primary_collections = ''
                     related_collections = ''
-
-                    primary_collections,related_collections = self.get_collections_related(product_title,soup_item)
-                    print(primary_collections,related_collections)
+                    try:
+                        primary_collections,related_collections = self.get_collections_related(product_title,soup_item)
+                        print(primary_collections,related_collections)
+                    except Exception as e:
+                        print(e)
+                        print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
                     # quit()
                     full_description = product_data['description']
                     full_description = str(self.clena_bad_tags(bs(full_description, 'html.parser')))
@@ -561,6 +567,8 @@ class ShopifyScrapper:
                     for product in product_data['variants']:
                         if product['id'] not in self.dublicate:
                             try:
+                                # print(product)
+                                # print('//////////////')
                                 secure_url = ''
                                 self.dublicate.append(product['id'])
 
@@ -622,13 +630,7 @@ class ShopifyScrapper:
 
 
                                 self.related_collections_handle_arr.append(product_handle)
-                                # print(related_col_arr)
-                                # if len(related_col_arr[0]) == 0:
-                                #     hh_arr = []
-                                #     hh_arr.append(product_handle)
-                                #     self.handle_arr.append(hh_arr)
-                                # else:
-                                #     self.handle_arr.append(related_col_arr)
+
                                 hh = []
                                 hh.append(product_handle)
                                 # print(f"product_handle {product_handle}")
@@ -656,10 +658,11 @@ class ShopifyScrapper:
                                 self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
                                 self.price_varies_arr.append(product_data['price_varies'])
 
-                                if str(product_data['compare_at_price']) != 'None':
-                                    self.compare_at_price_arr.append(self.cut_compare_price(product_data['compare_at_price']))
+                                if str(product['compare_at_price']) != 'None':
+                                    # print(f"product_data['compare_at_price'] {product['compare_at_price']}")
+                                    self.compare_at_price_arr.append(self.cut_compare_price(product['compare_at_price']))
                                 else:
-                                    self.compare_at_price_arr.append(product_data['compare_at_price'])
+                                    self.compare_at_price_arr.append(product['compare_at_price'])
 
                                 if product_data['compare_at_price_max'] == 'None':
                                     self.compare_at_price_max_arr.append(product_data['compare_at_price_max'])
@@ -668,8 +671,9 @@ class ShopifyScrapper:
                             except Exception as e:
                                 print(e)
                                 print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
-                except:
-                    pass
+                except Exception as e:
+                    print(e)
+                    print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
 
 
 
@@ -884,7 +888,7 @@ class ShopifyScrapper:
 
     def make_request(self,url,proxy,s,reconnect=None):
         response = ''
-        timeout = 20
+        timeout = 50
         try:
             if reconnect == True:
                 timeout = 80
@@ -929,6 +933,7 @@ class ShopifyScrapper:
             index = 0
             for fill_link in self.super_webarchive_products_links:
                 # try:
+                # fill_link = '/web/20220119135356/https://www.univers-fleuri.com/products/bouquet-de-pivoine-et-hortensia-artificielles'
                 print(f"Link origin {fill_link}")
                 fill_link = self.webarchive_url_domain + fill_link
                 self.request_link_by_link(fill_link)
@@ -948,8 +953,7 @@ class ShopifyScrapper:
                     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
                 index += 1
                 print(f"Prim INDEX = {index}")
-                # if index == 5:
-                #     break
+                # quit()
 
         elif len(all_categpries) > 0:
             index = 0
@@ -1592,7 +1596,7 @@ class ShopifyScrapper:
             print(len(self.super_webarchive_blog_links))
             print(self.super_webarchive_blog_links)
             print(len(self.super_webarchive_products_links))
-            print(self.super_webarchive_products_links[:100])
+            print(self.super_webarchive_products_links)
             # quit()
 
     def webarchive_page_par_page(self,page):
@@ -1649,9 +1653,16 @@ class ShopifyScrapper:
             a = super_parent.find('a')
             if a is not None:
                 other_collection = a.get('href')
-                if related_collections.find('/collections/') != -1:
+                # print(f"]]]]]]]]]]]]]]]]")
+                # print(other_collection)
+                # print(related_collections)
+                if "/collections" in other_collection:
                     clean_collections = self.clean_collections(other_collection)
-                    clean_collections = clean_collections.replace('#','')
+                    # print(clean_collections)
+                    try:
+                        clean_collections = clean_collections.replace('#','')
+                    except:
+                        pass
 
                     if len(related_collections) == 0 and len(clean_collections.strip()) > 2:
                         related_collections += clean_collections
@@ -1675,11 +1686,11 @@ class ShopifyScrapper:
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
     shopify_scrapper.webarchive = True
-    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20220703153727/"
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20220525035505/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
     shopify_scrapper.blog_name = "blog-du-japonais-kawaii"
 
-    shopify_scrapper.domain = "https://kaneki-shop.com"
+    shopify_scrapper.domain = "https://www.univers-fleuri.com"
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
@@ -1688,13 +1699,15 @@ if __name__ == "__main__":
     if shopify_scrapper.webarchive == False:
         all_categpries = shopify_scrapper.get_menu_links()
     # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
-    #
+    # shopify_scrapper.super_webarchive_products_links = ['/web/20220119135356/https://www.univers-fleuri.com/products/bouquet-de-pivoine-et-hortensia-artificielles']
+
     # print(all_categpries)
     # print(len(all_categpries))
-    # shopify_scrapper.scrap_shopify(all_categpries)
-    # shopify_scrapper.clean_duplicates()
+
+    shopify_scrapper.scrap_shopify(all_categpries)
+    shopify_scrapper.clean_duplicates()
     #
-    shopify_scrapper.scaping_collections_data(all_categpries)
+    # shopify_scrapper.scaping_collections_data(all_categpries)
     # get blog content data
     # shopify_scrapper.get_blog_content()
 
@@ -1706,6 +1719,29 @@ if __name__ == "__main__":
     le-japonais-kawaii.com - 309
     https://kaneki-shop.com - 535
     """
+    #
+    # wb = load_workbook("blog.xlsx")
+    # sheet = wb.worksheets[0]
+    # data_arr = []
+    # hendler_arr = []
+    # remove_indexs_arr = []
+    # hendler_origin_arr = []
+    # # Iterate over the rows in the sheet
+    # indexs = 0
+    # for row in sheet:
+    #     # ids = row[0].value
+    #     url = row[1].value
+    #     hendler = row[2].value
+    #     # print(ids)
+    #     print(url)
+    #     hh = url.split('/')[-1]
+    #     print(hh)
+    #     # print(hendler)
+    #
+    #     row[1].value = hh
+    #
+    #     # save to xlsx
+    #     wb.save("blog.xlsx")
 
 
 
