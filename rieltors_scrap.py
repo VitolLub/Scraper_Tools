@@ -10,6 +10,7 @@ import json
 import csv
 from pynput.keyboard import Key, Controller
 import psycopg2
+import random
 import time
 
 
@@ -452,7 +453,7 @@ class Rieltors:
             # len rows
             print(len(rows))
             # loop from 1 element, not 0
-            if len(rows):
+            if len(rows) > 2:
                 for i in range(1,len(rows)):
                     print(rows[i][0])
                     # delete all duplicates
@@ -600,28 +601,56 @@ class Rieltors:
     def save_data_into_excel(self):
         connection = self.postgres_connect()
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM data_collections_data_collections")
+        cursor.execute("SELECT * FROM data_collections_data_collections ORDER BY id DESC")
         rows = cursor.fetchall()
+
+        # random rows
+        random.shuffle(rows)
 
         index = 1
         index_last = 0
         for row in rows:
-            print(row[1])
-            self.email_array.append(row[1])
-            self.phone_array.append(row[2])
-            self.name_array.append(row[3])
-            self.state_array.append(row[4])
-            self.city_array.append(row[5])
-            self.zip_array.append(row[6])
-            self.company_array.append(row[7])
-            index_last += 1
-            if len(self.email_array) == 10000:
-                index = self.save_into_excel(index,index_last)
-                # clen all arrays
-                for name, value in vars(self).items():
-                    # clear all variables
-                    if type(value) is list:
-                        value.clear()
+            try:
+                phone = row[2].split("MOBILE")
+                phone = phone[1]
+            except:
+                phone = ''
+            # print(row[7])
+            # print(phone)
+            company_arr = ['Century','/Max','Coldwell','eXp','Berkshire','ERA','Compass','Sotheby’s']
+            comp = ''
+            status = False
+            for company in company_arr:
+                if company in row[7]:
+                    status = False
+                    break
+                elif company.upper() in row[7]:
+                    status = False
+                    break
+                else:
+                    comp = row[7]
+                    status = True
+            if status == True and len(comp) > 0 and len(phone) > 3:
+                # print(row[7])
+                # print(comp)
+                # quit()
+                self.email_array.append(row[1])
+                self.phone_array.append(phone)
+                self.name_array.append(row[3])
+                self.state_array.append(row[4])
+                self.city_array.append(row[5])
+                self.zip_array.append(row[6])
+                self.company_array.append(row[7])
+                # quit()
+                index_last += 1
+                if len(self.email_array) == 10000:
+                    index = self.save_into_excel(index,index_last)
+                    # clen all arrays
+                    for name, value in vars(self).items():
+                        # clear all variables
+                        if type(value) is list:
+                            value.clear()
+
         index = self.save_into_excel(index, index_last)
 
 
@@ -676,10 +705,10 @@ class Rieltors:
 
 if __name__ == "__main__":
     rieltors = Rieltors()
-    rieltors.read_csv_file()
-    rieltors.create_file()
-    rieltors.domain = "https://www.kw.com/search/location/ChIJY10Hv_i02YgRjdzvoWOVM6w-0.7420868142967443,Florida%2C%20Miami%2C%2033109,Miami%20Beach%2C%20FL%2033109%2C%20USA?fallBackCityAndState=Miami%20Beach%2C%20FL&fallBackPosition=25.7560139%2C%20-80.1344842&fallBackStreet=&isFallback=true&viewport=25.872362435965854%2C-80.1049454695791%2C25.826943802010476%2C-80.15103654929102&zoom=14"
-    rieltors.goto()
+    # rieltors.read_csv_file()
+    # rieltors.create_file()
+    # rieltors.domain = "https://www.kw.com/search/location/ChIJY10Hv_i02YgRjdzvoWOVM6w-0.7420868142967443,Florida%2C%20Miami%2C%2033109,Miami%20Beach%2C%20FL%2033109%2C%20USA?fallBackCityAndState=Miami%20Beach%2C%20FL&fallBackPosition=25.7560139%2C%20-80.1344842&fallBackStreet=&isFallback=true&viewport=25.872362435965854%2C-80.1049454695791%2C25.826943802010476%2C-80.15103654929102&zoom=14"
+    # rieltors.goto()
     #
     # rieltors.remvoe_duplicate()
 
@@ -689,7 +718,7 @@ if __name__ == "__main__":
 
     # rieltors.select_all_data_from_data_collection()
     #
-    # rieltors.save_data_into_excel()
+    rieltors.save_data_into_excel()
 
 
 
