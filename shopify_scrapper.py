@@ -98,13 +98,16 @@ class ShopifyScrapper:
         uls = soup.find_all(['p','h4','ul','ol','table','br'])
         for ul in uls:
             # print(ul)
-            if ul is None or len(ul.text) < 40:
+            if ul is None or len(ul.text) < 15:
                 # if ul children the same like parent, then remove
+                # print('removed')
+                # print(ul)
                 ul.decompose()
 
         return soup
 
     def cut_full_description(self,soup,full_description):
+
         fill_description_primary = ''
         bullet_points_arr = []
         related_col_arr = []
@@ -126,25 +129,6 @@ class ShopifyScrapper:
         soup = soup
 
 
-        # full_description_html = soup.find('div', class_='description')
-        # try:
-        #     bullet_points_arr = []
-        #     bullet_points = full_description_html.find_all('dl', class_='accordion')
-        #     for bullet_point in bullet_points:
-        #         # get html
-        #         bullet_points_arr.append(str(bullet_point))
-        # except Exception as e:
-        #     print(e)
-        #     bullet_points_arr = []
-        #     print(e)
-        #     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
-
-        # print("cut_full_description3")
-
-        fill_description_primary = ''
-        full_description_html = ''
-        # if self.domain == 'https://miss-minceur.com' or self.domain == 'https://www.univers-fleuri.com':
-
         full_description_html = str(full_description)
         full_description_html_res = []
 
@@ -156,24 +140,26 @@ class ShopifyScrapper:
             h2.decompose()
 
         ul_data = ul_data
-
+        # print('cut_full_description')
+        # print(ul_data)
         # find all ul and p
         ul_data = self.remove_all_none_tags(ul_data)
-
-        ul_data = ul_data.find_all(['p', 'h4', 'ul', 'ol', 'table'])
+        print('remove_all_none_tags')
+        print(ul_data)
+        ul_data = ul_data.find_all(['p', 'h4','div', 'ul', 'ol', 'table'])
         ul_index = 0
         tag_type = ''
         tag_value = ''
         description_status = False
         count_of_tags = len(ul_data)
         tga_index = 0
-        print(f"count_of_tags {count_of_tags}")
+        # print(f"count_of_tags {count_of_tags}")
         not_iquel_status = False
         for ul in ul_data:
             # print(ul.name)
             # print(ul)
 
-            if ul is not None and len(ul.text) > 40:
+            if ul is not None and len(ul.text) > 15:
 
                 tag_name = ul.name
                 if tag_type == '':
@@ -228,33 +214,14 @@ class ShopifyScrapper:
 
             ul_index += 1
 
-        # print('===============================')
-        # print('full_description_html_res')
-        # print(len(full_description_html_res))
-        # for tex in full_description_html_res:
-        #     print(tex)
-        #     print('===============================')
-        # quit()
-        # print('full_description_html_res')
-        #
-        # print(len(full_description_html_res))
-        # for full_description_html_res_item in full_description_html_res:
-        #     print(full_description_html_res_item)
-        #     print('------------------')
-        #
-        # quit()
-
-
         try:
             fill_description_primary = full_description_html_res[0]
         except Exception as e:
-            # print("--------------------------")
-            # print(full_description_html)
             fill_description_primary = full_description_html
+            print(fill_description_primary)
             print(e)
             print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
-        finally:
-            fill_description_primary = ''
+
 
 
         bullet_points_arr.clear()
@@ -356,49 +323,69 @@ class ShopifyScrapper:
         return full_description_html_primary
 
 
-    def get_collections_related(self,title,soup_item):
+    def get_collections_related(self,title,soup_item,real_soup):
         title_arr = title.split('<br>')
         print("+================")
         print(title_arr[0])
         print("+================")
-
-        all_a = soup_item.find_all('a')
         primary_collections = ''
         related_collections = ''
-        diff_percent_arr = {}
-        for a in all_a:
-            if a != None:
-                href = a.get('href')
-                a_text = a.text
-                if href is not None:
-                    if href.find('/collections/') != -1 or href.find('/pages/') != -1:
-                        # print(href)
-                        # print(a_text)
-                        percent = SequenceMatcher(None, title_arr[0], a_text).ratio()
-                        diff_percent_arr[href] = percent
-                        # quit()
-        # print(diff_percent_arr)
-        try:
-            primary_collection = max(diff_percent_arr, key=diff_percent_arr.get)
-            primary_collections = self.clean_collections(primary_collection)
+        # find 'Catégories' text in soup_item
+        cat_text = real_soup.find('div',class_='collection-product-list')
 
-        except Exception as e:
-            print(e)
-            print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
+        if cat_text != None:
+            # find all a
+            cat_text = cat_text.find_all('a')
+            for text in cat_text:
+                # get href
+                href = text.get('href')
+                # split
+                href_arr = href.split('/')[-1]
+                if len(href_arr) > 2:
+                    if len(primary_collections) == 0:
+                        primary_collections = str(href_arr)
+                    if len(related_collections) == 0:
+                        related_collections += str(href_arr)
+                    else:
+                        related_collections += ","+str(href_arr)
+            # print(related_collections)
+        else:
+            all_a = soup_item.find_all('a')
+
+            diff_percent_arr = {}
+            for a in all_a:
+                if a != None:
+                    href = a.get('href')
+                    a_text = a.text
+                    if href is not None:
+                        if href.find('/collections/') != -1 or href.find('/pages/') != -1:
+                            # print(href)
+                            # print(a_text)
+                            percent = SequenceMatcher(None, title_arr[0], a_text).ratio()
+                            diff_percent_arr[href] = percent
+                            # quit()
+            # print(diff_percent_arr)
+            try:
+                primary_collection = max(diff_percent_arr, key=diff_percent_arr.get)
+                primary_collections = self.clean_collections(primary_collection)
+
+            except Exception as e:
+                print(e)
+                print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
 
 
-        print(f"primary_collections {primary_collections}")
-        # find primary_collection in soup
-        for aa in all_a:
-            if aa is not None:
-                # print(aa)
-                try:
-                    if aa.get('href') == primary_collection:
-                        # find ul data
-                        related_collections = self.find_ul_data(aa, related_collections)
-                        break
-                except:
-                    pass
+            print(f"primary_collections {primary_collections}")
+            # find primary_collection in soup
+            for aa in all_a:
+                if aa is not None:
+                    # print(aa)
+                    try:
+                        if aa.get('href') == primary_collection:
+                            # find ul data
+                            related_collections = self.find_ul_data(aa, related_collections)
+                            break
+                    except:
+                        pass
 
         return primary_collections,related_collections
 
@@ -421,8 +408,7 @@ class ShopifyScrapper:
         if response_item != False and response_item != None:
             soup_item = bs(response_item.text, 'html.parser')
             just_text = response_item.text
-
-
+            real_soup = bs(response_item.text, 'html.parser')
 
             # remove bad tags
             print("clena_bad_tags")
@@ -434,6 +420,7 @@ class ShopifyScrapper:
                 print('sizeChartsRelentless.product')
                 print(len(soup_item.find_all('script')))
                 if just_text.find('sizeChartsRelentless.produc') != -1:
+                    print('sizeChartsRelentless.product')
                     all_script = soup_item.find_all('script')
                     for script in all_script:
                         # print(script)
@@ -450,7 +437,14 @@ class ShopifyScrapper:
                                 # product_data = product_data.text
                                 # print(product_data)
                                 break
+
+                elif soup_item.find('script', id='ProductJson-product-template') != -1:
+                    print('ProductJson-product-template')
+                    product_data = soup_item.find('script', id='ProductJson-product-template')
+                    product_data = product_data.text
+
                 elif str(soup_item).find('var meta = {"product":') != -1:
+                    print('var meta = {"product":')
                     pos1 = str(soup_item).find('var meta = {"product":')
                     strind_text = str(soup_item)[pos1+22:]
 
@@ -461,12 +455,9 @@ class ShopifyScrapper:
                     product_data = product_data.split('},"')
                     product_data = product_data[0]
                     product_data = product_data+'}'
-                    # quit()
-                elif soup_item.find('script', id='ProductJson-product-template') != -1:
-                    product_data = soup_item.find('script', id='ProductJson-product-template')
-                    product_data = product_data.text
 
                 else:
+                    print('product_form')
                     product_data = soup_item.find('div', class_='product_form')
                     product_data = product_data['data-product']
                     product_data = product_data.text
@@ -484,6 +475,7 @@ class ShopifyScrapper:
 
                     produc_id = product_data['id']
                     img_extra = soup_item.find('meta', {'property': 'og:image'})['content']
+                    og_price_amount = soup_item.find('meta', {'property': 'og:price:amount'})['content']
                     # img_extra = self.cuto_to_cdn(img_extra)
                     print(f"img_extra {img_extra}")
                     print(produc_id)
@@ -522,7 +514,7 @@ class ShopifyScrapper:
                     primary_collections = ''
                     related_collections = ''
                     try:
-                        primary_collections,related_collections = self.get_collections_related(product_title,soup_item)
+                        primary_collections,related_collections = self.get_collections_related(product_title,soup_item,real_soup)
                         print(primary_collections,related_collections)
                     except Exception as e:
                         print(e)
@@ -649,13 +641,13 @@ class ShopifyScrapper:
                                 try:
                                     self.price_arr.append(self.cut_compare_price(product_data['price']))
                                 except:
-                                    self.price_arr.append('')
+                                    self.price_arr.append(og_price_amount)
                                 try:
                                     self.price_min_arr.append(self.cut_compare_price(product_data['price_min']))
                                     self.price_max_arr.append(self.cut_compare_price(product_data['price_max']))
                                 except:
-                                    self.price_min_arr.append('')
-                                    self.price_max_arr.append('')
+                                    self.price_min_arr.append(og_price_amount)
+                                    self.price_max_arr.append(og_price_amount)
 
                                 self.full_link_arr.append(link_by_item)
                                 self.data_value_list_arr.append(data_value_list)
@@ -729,8 +721,8 @@ class ShopifyScrapper:
                                     self.available_arr.append(product_data['available'])
                                     self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
                                     self.price_varies_arr.append(product_data['price_varies'])
-                                    self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
-                                    self.price_varies_arr.append(product_data['price_varies'])
+                                    # self.compare_at_price_varies_arr.append(product_data['compare_at_price_varies'])
+                                    # self.price_varies_arr.append(product_data['price_varies'])
 
                                     if str(product['compare_at_price']) != 'None':
                                         # print(f"product_data['compare_at_price'] {product['compare_at_price']}")
@@ -745,18 +737,16 @@ class ShopifyScrapper:
                                         self.compare_at_price_max_arr.append(self.cut_compare_price(product_data['compare_at_price_max']))
 
                                 except:
-                                    og_price_amount = soup_item.find('meta', {'property': 'og:price:amount'})['content']
+
                                     self.published_at.append('')
                                     self.created_at.append('')
-                                    self.available_arr.append('')
+                                    self.available_arr.append('TRUE')
                                     self.compare_at_price_varies_arr.append(og_price_amount)
                                     self.price_varies_arr.append(og_price_amount)
-                                    self.compare_at_price_varies_arr.append(og_price_amount)
-                                    self.price_varies_arr.append(og_price_amount)
+                                    # self.compare_at_price_varies_arr.append('FALSE')
+                                    # self.price_varies_arr.append(og_price_amount)
                                     self.compare_at_price_arr.append(og_price_amount)
-                                    self.compare_at_price_arr.append(og_price_amount)
-                                    self.compare_at_price_max_arr.append(og_price_amount)
-                                    self.compare_at_price_max_arr.append(og_price_amount)
+                                    self.compare_at_price_max_arr.append('0')
 
                             except Exception as e:
                                 print(e)
@@ -909,15 +899,18 @@ class ShopifyScrapper:
                 value.clear()
 
     def remove_webarchive_from_img(self, img):
-        print('remove_webarchive_from_img')
-        print(img)
+        # print('remove_webarchive_from_img')
+        # print(img)
         img_arr = []
         if img != '':
             if self.webarchive == True:
                 img_arr = img.split(',')
                 for i,im in enumerate(img_arr):
-                    end_pos = im.find('https://cdn')
-                    img_arr[i] = im[end_pos:]
+                    # print(im)
+                    end_pos = im.find('//cdn')
+                    # print(end_pos)
+                    img_arr[i] = im[end_pos+2:]
+                    # print(img_arr[i])
 
                 return ",".join(img_arr)
             elif self.webarchive == False:
@@ -925,10 +918,10 @@ class ShopifyScrapper:
                 for i, im in enumerate(img_arr):
                     if im.find('https:') == -1:
                         img_arr[i] = 'https:' + im
-                print(img_arr)
+                # print(img_arr)
                 return ",".join(img_arr)
         else:
-            print(img_arr)
+            # print(img_arr)
             return img
 
     def save_to_csv(self,id_by_id_arr,product_name_arr, price_arr,full_link_arr,
@@ -1026,7 +1019,6 @@ class ShopifyScrapper:
             index = 0
             for fill_link in self.super_webarchive_products_links:
                 # try:
-                # fill_link = '/web/20220119135356/https://www.univers-fleuri.com/products/bouquet-de-pivoine-et-hortensia-artificielles'
                 print(f"Link origin {fill_link}")
                 fill_link = self.webarchive_url_domain + fill_link
                 self.request_link_by_link(fill_link)
@@ -1046,7 +1038,8 @@ class ShopifyScrapper:
                     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
                 index += 1
                 print(f"Prim INDEX = {index}")
-                # quit()
+                # if index == 5:
+                #     break
 
         elif len(all_categpries) > 0:
             index = 0
@@ -1838,14 +1831,12 @@ if __name__ == "__main__":
 
     shopify_scrapper.domain = "https://kaneki-shop.com"
     all_categpries = []
-    # if shopify_scrapper.webarchive == True:
-    #     shopify_scrapper.scrap_webarchive()
-    #
-    # #remove duplicates from self.super_webarchive_products_links
-    # print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
-    # print(shopify_scrapper.super_webarchive_products_links)
+    if shopify_scrapper.webarchive == True:
+        shopify_scrapper.scrap_webarchive()
 
-
+    #remove duplicates from self.super_webarchive_products_links
+    print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
+    print(shopify_scrapper.super_webarchive_products_links)
 
     shopify_scrapper.create_xls_file()
     # if shopify_scrapper.webarchive == False:
@@ -1853,12 +1844,12 @@ if __name__ == "__main__":
     # # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
     # # shopify_scrapper.super_webarchive_products_links = ['/web/20220119135356/https://www.univers-fleuri.com/products/bouquet-de-pivoine-et-hortensia-artificielles']
     #
-    # # print(all_categpries)
-    # # print(len(all_categpries))
-    shopify_scrapper.super_webarchive_products_links = ['/web/20211025205727/https://kaneki-shop.com/products/sac-tokyo-ghoul-oeil-rouge']
+    print(all_categpries)
+    print(len(all_categpries))
+    # shopify_scrapper.super_webarchive_products_links = ['/web/20220528035308/https://kaneki-shop.com/products/anime-t-shirt-tokyo-ghoul']
     shopify_scrapper.scrap_shopify(all_categpries)
-    # shopify_scrapper.clean_duplicates()
-    #
+    shopify_scrapper.clean_duplicates()
+
     # shopify_scrapper.scaping_collections_data(all_categpries)
     # get blog content data
     # shopify_scrapper.get_blog_content()
