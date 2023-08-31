@@ -1038,8 +1038,8 @@ class ShopifyScrapper:
                     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
                 index += 1
                 print(f"Prim INDEX = {index}")
-                # if index == 5:
-                #     break
+                if index == 5:
+                    break
 
         elif len(all_categpries) > 0:
             index = 0
@@ -1833,7 +1833,7 @@ if __name__ == "__main__":
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
-
+    
     #remove duplicates from self.super_webarchive_products_links
     print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
     print(shopify_scrapper.super_webarchive_products_links)
