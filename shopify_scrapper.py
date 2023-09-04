@@ -1332,10 +1332,12 @@ class ShopifyScrapper:
                         fff_link = self.webarchive_url_domain + link
                         print(fff_link)
 
-                        page.goto(self.webarchive_url_domain + link, timeout=300000)
+                        page.goto(self.webarchive_url_domain + link, timeout=500000)
                     else:
                         fff_link = self.domain + link
-                        page.goto(self.domain+link, timeout=300000)
+                        page.goto(self.domain+link, timeout=500000)
+
+                    # check if title loading
 
                     # get html content
                     html = page.content()
@@ -1360,10 +1362,12 @@ class ShopifyScrapper:
                     style_tags = soup.find_all(style=True)
                     for style_tag in style_tags:
                         # remove style attr
+                        del style_tag['class']
                         del style_tag['style']
+                        del style_tag['alt']
+                        del style_tag['id']
                         del style_tag['data-mce-style']
                         del style_tag['data-mce-fragment']
-                        del style_tag['class']
                         del style_tag['data-mce-fragment']
                         del style_tag['data-mce-selected']
                         del style_tag['width']
@@ -1822,6 +1826,27 @@ class ShopifyScrapper:
     def clean_collections(self,collection)->str:
         return  str(collection.split('/')[-1])
 
+
+    def check_desc(self):
+        # read shopify2.xlsx
+        wb = load_workbook("shopify2.xlsx")
+        sheet = wb.worksheets[0]
+        data_arr = []
+        hendler_arr = []
+        for row in sheet:
+            desc = row[14].value
+            bullet = row[15].value
+
+            if desc.find('ul') !=-1 or desc.find('ol') != -1:
+                print(f"{row[0].value}")
+                print(desc)
+                print(bullet)
+                row[14].value = ''
+                row[15].value = desc
+                wb.save("shopify2.xlsx")
+
+
+
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
     shopify_scrapper.webarchive = True
@@ -1831,27 +1856,30 @@ if __name__ == "__main__":
 
     shopify_scrapper.domain = "https://kaneki-shop.com"
     all_categpries = []
-    if shopify_scrapper.webarchive == True:
-        shopify_scrapper.scrap_webarchive()
-    
-    #remove duplicates from self.super_webarchive_products_links
-    print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
-    print(shopify_scrapper.super_webarchive_products_links)
+    # if shopify_scrapper.webarchive == True:
+    #     shopify_scrapper.scrap_webarchive()
+    #
+    # #remove duplicates from self.super_webarchive_products_links
+    # print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
+    # print(shopify_scrapper.super_webarchive_products_links)
 
-    shopify_scrapper.create_xls_file()
+    # shopify_scrapper.create_xls_file()
     # if shopify_scrapper.webarchive == False:
     #     all_categpries = shopify_scrapper.get_menu_links()
     # # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
     # # shopify_scrapper.super_webarchive_products_links = ['/web/20220119135356/https://www.univers-fleuri.com/products/bouquet-de-pivoine-et-hortensia-artificielles']
     #
-    print(all_categpries)
-    print(len(all_categpries))
+    # print(all_categpries)
+    # print(len(all_categpries))
     # shopify_scrapper.super_webarchive_products_links = ['/web/20220528035308/https://kaneki-shop.com/products/anime-t-shirt-tokyo-ghoul']
-    shopify_scrapper.scrap_shopify(all_categpries)
-    shopify_scrapper.clean_duplicates()
+    # shopify_scrapper.scrap_shopify(all_categpries)
+    # shopify_scrapper.clean_duplicates()
+    shopify_scrapper.check_desc()
 
     # shopify_scrapper.scaping_collections_data(all_categpries)
     # get blog content data
+
+
     # shopify_scrapper.get_blog_content()
 
 
