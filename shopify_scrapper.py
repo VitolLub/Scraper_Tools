@@ -475,7 +475,10 @@ class ShopifyScrapper:
 
                     produc_id = product_data['id']
                     img_extra = soup_item.find('meta', {'property': 'og:image'})['content']
-                    og_price_amount = soup_item.find('meta', {'property': 'og:price:amount'})['content']
+                    try:
+                        og_price_amount = soup_item.find('meta', {'property': 'og:price:amount'})['content']
+                    except:
+                        og_price_amount = ''
                     # img_extra = self.cuto_to_cdn(img_extra)
                     print(f"img_extra {img_extra}")
                     print(produc_id)
@@ -1038,8 +1041,8 @@ class ShopifyScrapper:
                     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
                 index += 1
                 print(f"Prim INDEX = {index}")
-                if index == 5:
-                    break
+                # if index == 5:
+                #     break
 
         elif len(all_categpries) > 0:
             index = 0
@@ -1362,9 +1365,9 @@ class ShopifyScrapper:
                     style_tags = soup.find_all(style=True)
                     for style_tag in style_tags:
                         # remove style attr
+                        del style_tag['alt']
                         del style_tag['class']
                         del style_tag['style']
-                        del style_tag['alt']
                         del style_tag['id']
                         del style_tag['data-mce-style']
                         del style_tag['data-mce-fragment']
@@ -1434,7 +1437,19 @@ class ShopifyScrapper:
                         desc_html = soup.find('div', class_='rte')
                         # print(desc_html)
                         # quit()
-
+                        for style_tag in desc_html.find_all():
+                            # remove style attr
+                            del style_tag['alt']
+                            del style_tag['class']
+                            del style_tag['style']
+                            del style_tag['id']
+                            del style_tag['data-mce-style']
+                            del style_tag['data-mce-fragment']
+                            del style_tag['data-mce-fragment']
+                            del style_tag['data-mce-selected']
+                            del style_tag['width']
+                            del style_tag['border']
+                            del style_tag['data-sheets-value']
                         all_a = desc_html.find_all(['img','a'])
                         for a in all_a:
                             print(a.name)
@@ -1456,6 +1471,7 @@ class ShopifyScrapper:
                         desc_text_full = desc_html.text
                         desc_html = str(desc_html).replace('""','"')
                         desc_html_full = str(desc_html)
+                        print(desc_html_full)
 
 
                     except Exception as e:
@@ -1829,65 +1845,113 @@ class ShopifyScrapper:
 
     def check_desc(self):
         # read shopify2.xlsx
-        wb = load_workbook("shopify2.xlsx")
+        wb = load_workbook("shopify.xlsx")
         sheet = wb.worksheets[0]
         data_arr = []
         hendler_arr = []
         for row in sheet:
             desc = row[14].value
             bullet = row[15].value
+            compare_at_price = row[28].value
+            compare_at_price_max = row[29].value
+            related_collection = row[5].value
 
-            if desc.find('ul') !=-1 or desc.find('ol') != -1:
-                print(f"{row[0].value}")
-                print(desc)
-                print(bullet)
-                row[14].value = ''
-                row[15].value = desc
-                wb.save("shopify2.xlsx")
+            img34 = row[33].value
+            img35 = row[34].value
+            img40 = row[39].value
+            # print(img34)
+            try:
+                if desc.find('ul') !=-1 or desc.find('ol') != -1:
 
+                        print(f"{row[14].value}")
+                        print(desc)
+                        print(bullet)
+                        row[14].value = ''
+                        row[15].value = desc
+            except:
+                pass
+                # wb.save("shopify2.xlsx")
+
+            if compare_at_price == '0' or compare_at_price_max == '0':
+                # print(compare_at_price)
+                # print(compare_at_price_max)
+                row[28].value = ''
+                row[29].value = ''
+
+            if img34:
+                split_img = img34.split(',')
+                for img in split_img:
+                    if img.find('cdn') != -1 and img.find('http') == -1:
+                        split_img[split_img.index(img)] = 'https://' + img
+                # print(split_img)
+                row[33].value = ",".join(split_img)
+
+            if img35:
+                split_img = img35.split(',')
+                for img in split_img:
+                    if img.find('cdn') != -1 and img.find('http') == -1:
+                        split_img[split_img.index(img)] = 'https://' + img
+                row[34].value = ",".join(split_img)
+            #
+            if img40:
+                # print(img40)
+                split_img = img40.split(',')
+                for img in split_img:
+                    if img.find('cdn') != -1 and img.find('http') == -1:
+                        split_img[split_img.index(img)] = 'https://' + img
+                # print(split_img)
+                row[39].value = ",".join(split_img)
+
+            if related_collection:
+                related_collection_arr = related_collection.split(',')
+                # print(related_collection_arr)
+                related_collection_arr = list(dict.fromkeys(related_collection_arr))
+                row[5].value = ",".join(related_collection_arr)
+
+
+        wb.save("shopify.xlsx")
+
+                
 
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
     shopify_scrapper.webarchive = True
-    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20201101082704/"
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20211021000000/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-    shopify_scrapper.blog_name = "tokyo-ghoul"
+    shopify_scrapper.blog_name = "blog-vintage"
 
-    shopify_scrapper.domain = "https://kaneki-shop.com"
+    shopify_scrapper.domain = "https://vintage-styles.fr"
     all_categpries = []
-    # if shopify_scrapper.webarchive == True:
-    #     shopify_scrapper.scrap_webarchive()
-    #
-    # #remove duplicates from self.super_webarchive_products_links
-    # print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
-    # print(shopify_scrapper.super_webarchive_products_links)
+    if shopify_scrapper.webarchive == True:
+        shopify_scrapper.scrap_webarchive()
 
-    # shopify_scrapper.create_xls_file()
-    # if shopify_scrapper.webarchive == False:
-    #     all_categpries = shopify_scrapper.get_menu_links()
-    # # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
-    # # shopify_scrapper.super_webarchive_products_links = ['/web/20220119135356/https://www.univers-fleuri.com/products/bouquet-de-pivoine-et-hortensia-artificielles']
+    #remove duplicates from self.super_webarchive_products_links
+    print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
+    print(shopify_scrapper.super_webarchive_products_links)
+
+    shopify_scrapper.create_xls_file()
+    if shopify_scrapper.webarchive == False:
+        all_categpries = shopify_scrapper.get_menu_links()
+    # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
+    # shopify_scrapper.super_webarchive_products_links = ['/web/20220119135356/https://www.univers-fleuri.com/products/bouquet-de-pivoine-et-hortensia-artificielles']
     #
     # print(all_categpries)
     # print(len(all_categpries))
     # shopify_scrapper.super_webarchive_products_links = ['/web/20220528035308/https://kaneki-shop.com/products/anime-t-shirt-tokyo-ghoul']
-    # shopify_scrapper.scrap_shopify(all_categpries)
-    # shopify_scrapper.clean_duplicates()
+    shopify_scrapper.scrap_shopify(all_categpries)
+    shopify_scrapper.clean_duplicates()
     shopify_scrapper.check_desc()
-
-    # shopify_scrapper.scaping_collections_data(all_categpries)
+    shopify_scrapper.scaping_collections_data(all_categpries)
     # get blog content data
-
-
-    # shopify_scrapper.get_blog_content()
+    shopify_scrapper.get_blog_content()
 
 
 
     """
-    vintage-styles.fr - 360
+    https://vintage-styles.fr - 360
     univers fleuri  - 874
-    le-japonais-kawaii.com - 309
+    https://le-japonais-kawaii.com - 309
     https://kaneki-shop.com - 535
     """
 
