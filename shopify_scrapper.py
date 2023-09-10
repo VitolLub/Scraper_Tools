@@ -145,7 +145,7 @@ class ShopifyScrapper:
         # find all ul and p
         ul_data = self.remove_all_none_tags(ul_data)
         print('remove_all_none_tags')
-        print(ul_data)
+        # print(ul_data)
         ul_data = ul_data.find_all(['p', 'h4','div', 'ul', 'ol', 'table'])
         ul_index = 0
         tag_type = ''
@@ -153,13 +153,13 @@ class ShopifyScrapper:
         description_status = False
         count_of_tags = len(ul_data)
         tga_index = 0
-        # print(f"count_of_tags {count_of_tags}")
+        print(f"count_of_tags {count_of_tags}")
         not_iquel_status = False
         for ul in ul_data:
-            # print(ul.name)
-            # print(ul)
 
-            if ul is not None and len(ul.text) > 15:
+            if ul is not None and len(ul.text) > 5:
+                print(ul.name)
+                print(ul)
 
                 tag_name = ul.name
                 if tag_type == '':
@@ -221,6 +221,7 @@ class ShopifyScrapper:
             print(fill_description_primary)
             print(e)
             print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
+        # quit()
 
 
 
@@ -1335,25 +1336,28 @@ class ShopifyScrapper:
                         fff_link = self.webarchive_url_domain + link
                         print(fff_link)
 
-                        page.goto(self.webarchive_url_domain + link, timeout=500000)
+                        page.goto(self.webarchive_url_domain + link, timeout=5000000)
                     else:
                         fff_link = self.domain + link
-                        page.goto(self.domain+link, timeout=500000)
+                        page.goto(self.domain+link, timeout=5000000)
 
                     # check if title loading
 
                     # get html content
                     html = page.content()
-
+                    print(f"Get Html content")
                     # make soup
                     soup = bs(html, 'html.parser')
 
                     # get description from meta
-                    
-                    excerpt = soup.find('meta', attrs={'name': 'description'})
-                    excerpt = excerpt.get('content')
-                    print(f"excerpt")
-                    print(excerpt)
+                    try:
+                        excerpt = soup.find('meta', attrs={'name': 'description'})
+                        excerpt = excerpt.get('content')
+                        print(f"excerpt")
+                        print(excerpt)
+                    except:
+                        # meta property og:description
+                        excerpt = soup.find('meta', property='og:description')['content']
 
                     try:
                         og_tags = soup.find('meta', property='og:tags')['content']
@@ -1500,8 +1504,9 @@ class ShopifyScrapper:
                     # desc_text = ''
                     # desc_html = ''
                     self.save_blog_data_to_xlsx(fff_link,blog_handle,ceo_title,Categories,ceo_desc,title_text,title_html,desc_text_full,desc_html_full,feature_image,excerpt,og_tags)
-                except:
-                    pass
+                except Exception as e:
+                    print(e)
+
 
 
 
@@ -1627,7 +1632,7 @@ class ShopifyScrapper:
                 print(full_link)
                 col_p = category.find('/collections/')
                 dm_p = category.find(self.domain)
-                if col_p > dm_p:
+                if col_p > dm_p and full_link.find('.json') == -1:
                     self.collection_request(full_link, handle)
 
 
@@ -1649,8 +1654,8 @@ class ShopifyScrapper:
                 print(full_link)
                 # quit()
                 handle = category.split('/')[-1]
-
-                self.collection_request(full_link,handle)
+                if full_link.find('.json') == -1:
+                    self.collection_request(full_link,handle)
                     # except:
                     #     pass
                 colect_index += 1
@@ -1691,6 +1696,7 @@ class ShopifyScrapper:
                 col_pos = collection_img.find('_/http')
                 col_img = collection_img[col_pos + 10:]
                 print(f"col_img {col_img}")
+                col_img = "http://"+col_img
             except:
                 col_img = ''
 
@@ -1859,15 +1865,14 @@ class ShopifyScrapper:
             img34 = row[33].value
             img35 = row[34].value
             img40 = row[39].value
-            # print(img34)
             try:
-                if desc.find('ul') !=-1 or desc.find('ol') != -1:
-
-                        print(f"{row[14].value}")
-                        print(desc)
-                        print(bullet)
-                        row[14].value = ''
-                        row[15].value = desc
+                if desc.find('<ul>') !=-1 or desc.find('<ol>') != -1:
+                    print(desc)
+                    # print(f"{row[14].value}")
+                    # print(desc)
+                    # print(bullet)
+                    row[14].value = ''
+                    row[15].value = desc
             except:
                 pass
                 # wb.save("shopify2.xlsx")
@@ -1925,27 +1930,22 @@ if __name__ == "__main__":
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
-
-    #remove duplicates from self.super_webarchive_products_links
-    print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
-    print(shopify_scrapper.super_webarchive_products_links)
-
-    shopify_scrapper.create_xls_file()
-    if shopify_scrapper.webarchive == False:
-        all_categpries = shopify_scrapper.get_menu_links()
-    # # all_categpries = ['/collections/couteaux-chinois','/collections/services-a-the-chinois','/collections/theiere-chinoise','/collections/tatouages-chinois','/collections/bols-chinois']
-    # shopify_scrapper.super_webarchive_products_links = ['/web/20220119135356/https://www.univers-fleuri.com/products/bouquet-de-pivoine-et-hortensia-artificielles']
     #
-    # print(all_categpries)
-    # print(len(all_categpries))
-    # shopify_scrapper.super_webarchive_products_links = ['/web/20220528035308/https://kaneki-shop.com/products/anime-t-shirt-tokyo-ghoul']
-    shopify_scrapper.scrap_shopify(all_categpries)
-    shopify_scrapper.clean_duplicates()
-    shopify_scrapper.check_desc()
+    # #remove duplicates from self.super_webarchive_products_links
+    # print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
+    # print(shopify_scrapper.super_webarchive_products_links)
+    #
+    # shopify_scrapper.create_xls_file()
+    # if shopify_scrapper.webarchive == False:
+    #     all_categpries = shopify_scrapper.get_menu_links()
+    #
+    # shopify_scrapper.scrap_shopify(all_categpries)
+    # shopify_scrapper.clean_duplicates()
+    # shopify_scrapper.check_desc()
 
     shopify_scrapper.scaping_collections_data(all_categpries)
-    # get blog content data
-    shopify_scrapper.get_blog_content()
+    # # get blog content data
+    # shopify_scrapper.get_blog_content()
 
 
 
