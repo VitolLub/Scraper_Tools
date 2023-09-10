@@ -1845,7 +1845,7 @@ class ShopifyScrapper:
 
     def check_desc(self):
         # read shopify2.xlsx
-        wb = load_workbook("shopify.xlsx")
+        wb = load_workbook("shopify2.xlsx")
         sheet = wb.worksheets[0]
         data_arr = []
         hendler_arr = []
@@ -1909,7 +1909,7 @@ class ShopifyScrapper:
                 row[5].value = ",".join(related_collection_arr)
 
 
-        wb.save("shopify.xlsx")
+        wb.save("shopify2.xlsx")
 
                 
 
@@ -1942,6 +1942,7 @@ if __name__ == "__main__":
     shopify_scrapper.scrap_shopify(all_categpries)
     shopify_scrapper.clean_duplicates()
     shopify_scrapper.check_desc()
+
     shopify_scrapper.scaping_collections_data(all_categpries)
     # get blog content data
     shopify_scrapper.get_blog_content()
