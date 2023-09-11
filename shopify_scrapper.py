@@ -1924,28 +1924,28 @@ if __name__ == "__main__":
     shopify_scrapper.webarchive = True
     shopify_scrapper.webarchive_url = "http://web.archive.org/web/20211021000000/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-    shopify_scrapper.blog_name = "blog-vintage"
+    shopify_scrapper.blog_name = "blog-du-japonais-kawaii"
 
-    shopify_scrapper.domain = "https://vintage-styles.fr"
+    shopify_scrapper.domain = "https://le-japonais-kawaii.com"
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
-    #
-    # #remove duplicates from self.super_webarchive_products_links
-    # print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
-    # print(shopify_scrapper.super_webarchive_products_links)
-    #
-    # shopify_scrapper.create_xls_file()
-    # if shopify_scrapper.webarchive == False:
-    #     all_categpries = shopify_scrapper.get_menu_links()
-    #
-    # shopify_scrapper.scrap_shopify(all_categpries)
-    # shopify_scrapper.clean_duplicates()
-    # shopify_scrapper.check_desc()
+
+    #remove duplicates from self.super_webarchive_products_links
+    print(len(list(dict.fromkeys(shopify_scrapper.super_webarchive_products_links))))
+    print(shopify_scrapper.super_webarchive_products_links)
+
+    shopify_scrapper.create_xls_file()
+    if shopify_scrapper.webarchive == False:
+        all_categpries = shopify_scrapper.get_menu_links()
+
+    shopify_scrapper.scrap_shopify(all_categpries)
+    shopify_scrapper.clean_duplicates()
+    shopify_scrapper.check_desc()
 
     shopify_scrapper.scaping_collections_data(all_categpries)
     # # get blog content data
-    # shopify_scrapper.get_blog_content()
+    shopify_scrapper.get_blog_content()
 
 
 
