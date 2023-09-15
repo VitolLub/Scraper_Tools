@@ -158,8 +158,8 @@ class ShopifyScrapper:
         for ul in ul_data:
 
             if ul is not None and len(ul.text) > 5:
-                print(ul.name)
-                print(ul)
+                # print(ul.name)
+                # print(ul)
 
                 tag_name = ul.name
                 if tag_type == '':
@@ -326,9 +326,9 @@ class ShopifyScrapper:
 
     def get_collections_related(self,title,soup_item,real_soup):
         title_arr = title.split('<br>')
-        print("+================")
-        print(title_arr[0])
-        print("+================")
+        # print("+================")
+        # print(title_arr[0])
+        # print("+================")
         primary_collections = ''
         related_collections = ''
         # find 'Catégories' text in soup_item
@@ -557,7 +557,7 @@ class ShopifyScrapper:
                                 collection = href[c_p+13:p_p]
                                 print(f"Real collection {collection}")
                                 break
-                    print(collection)
+                    # print(collection)
                     try:
                         # print('a')
                         full_description_html_primary, bullet_points_arr, related_col_arr = self.cut_full_description(soup_item,full_description)
@@ -630,10 +630,10 @@ class ShopifyScrapper:
                                 else:
                                     self.related_collections_site = related_collections
 
-                                print(f"===============================")
-                                print(self.primary_collections_site)
-                                print(self.related_collections_site)
-                                print(f"===============================")
+                                # print(f"===============================")
+                                # print(self.primary_collections_site)
+                                # print(self.related_collections_site)
+                                # print(f"===============================")
                                 self.variant_price_arr.append(self.cut_compare_price(product['price']))
 
                                 self.product_hendler.append(product_handle)
@@ -1782,6 +1782,7 @@ class ShopifyScrapper:
                         link = link.replace('*','')
                     except:
                         link = link
+                    print(link)
                     if link.find('/blogs/') != -1 and link.find('?page=') == -1:
                         # print('Done')
                         if link not in self.super_webarchive_blog_links:
@@ -1939,13 +1940,14 @@ if __name__ == "__main__":
     if shopify_scrapper.webarchive == False:
         all_categpries = shopify_scrapper.get_menu_links()
 
+
     shopify_scrapper.scrap_shopify(all_categpries)
     shopify_scrapper.clean_duplicates()
     shopify_scrapper.check_desc()
-
-    shopify_scrapper.scaping_collections_data(all_categpries)
-    # # get blog content data
-    shopify_scrapper.get_blog_content()
+    #
+    # shopify_scrapper.scaping_collections_data(all_categpries)
+    # # # get blog content data
+    # shopify_scrapper.get_blog_content()
 
 
 
