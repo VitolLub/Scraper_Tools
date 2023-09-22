@@ -1749,7 +1749,7 @@ class ShopifyScrapper:
             all_pages = total_pages/50
 
 
-            all_pages = int(all_pages)
+            all_pages = int(all_pages)+1
             # print(all_pages)
 
 
@@ -1776,13 +1776,12 @@ class ShopifyScrapper:
             # print(link)
             link = link.get('href')
             if link != None and link.find(self.domain) != -1:
-                # print(link)
+                print(link)
                 if link.find("?page=") == -1 and link.find(".oembed") == -1 and link.find(".atom") == -1:
                     try:
                         link = link.replace('*','')
                     except:
                         link = link
-                    print(link)
                     if link.find('/blogs/') != -1 and link.find('?page=') == -1:
                         # print('Done')
                         if link not in self.super_webarchive_blog_links:
@@ -1925,9 +1924,9 @@ if __name__ == "__main__":
     shopify_scrapper.webarchive = True
     shopify_scrapper.webarchive_url = "http://web.archive.org/web/20211021000000/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-    shopify_scrapper.blog_name = "blog-du-japonais-kawaii"
+    shopify_scrapper.blog_name = "news"
 
-    shopify_scrapper.domain = "https://le-japonais-kawaii.com"
+    shopify_scrapper.domain = "http://bonheur-tibetain.fr"
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
@@ -1945,9 +1944,9 @@ if __name__ == "__main__":
     shopify_scrapper.clean_duplicates()
     shopify_scrapper.check_desc()
     #
-    # shopify_scrapper.scaping_collections_data(all_categpries)
-    # # # get blog content data
-    # shopify_scrapper.get_blog_content()
+    shopify_scrapper.scaping_collections_data(all_categpries)
+    # # get blog content data
+    shopify_scrapper.get_blog_content()
 
 
 
