@@ -350,6 +350,29 @@ class ShopifyScrapper:
                     else:
                         related_collections += ","+str(href_arr)
             # print(related_collections)
+        elif real_soup.find('center') != None:
+            # get center text in soup_item
+            center_text = real_soup.find('center')
+            print(center_text)
+            # divade by <br/>
+            # get html text
+            html_txt = str(center_text)
+            html_txt = html_txt.replace('<center>','').replace('</center>','')
+            html_txt = html_txt.split('<br/>')
+            print(html_txt)
+            # split by <br>
+            center_text = center_text.text.split('<br/>')
+            # for ind,el in enumerate(html_txt):
+            lowwer = html_txt[0].strip().lower()
+            lowwer = lowwer.replace(' ', '-')
+            html_txt[0] = lowwer
+            # lowwer = html_txt[0].lower()
+
+            print(center_text)
+            print(html_txt)
+            primary_collections = html_txt[0]
+            related_collections = str(html_txt[0])
+
         else:
             all_a = soup_item.find_all('a')
 
@@ -1042,7 +1065,7 @@ class ShopifyScrapper:
                     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
                 index += 1
                 print(f"Prim INDEX = {index}")
-                # if index == 5:
+                # if index == 10:
                 #     break
 
         elif len(all_categpries) > 0:
@@ -1922,11 +1945,11 @@ class ShopifyScrapper:
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
     shopify_scrapper.webarchive = True
-    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20211021000000/"
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210624061727/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
     shopify_scrapper.blog_name = "news"
 
-    shopify_scrapper.domain = "http://bonheur-tibetain.fr"
+    shopify_scrapper.domain = "https://vintage-styles.fr"
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
@@ -1944,9 +1967,9 @@ if __name__ == "__main__":
     shopify_scrapper.clean_duplicates()
     shopify_scrapper.check_desc()
     #
-    shopify_scrapper.scaping_collections_data(all_categpries)
+    # shopify_scrapper.scaping_collections_data(all_categpries)
     # # get blog content data
-    shopify_scrapper.get_blog_content()
+    # shopify_scrapper.get_blog_content()
 
 
 
