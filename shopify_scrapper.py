@@ -350,28 +350,28 @@ class ShopifyScrapper:
                     else:
                         related_collections += ","+str(href_arr)
             # print(related_collections)
-        elif real_soup.find('center') != None:
-            # get center text in soup_item
-            center_text = real_soup.find('center')
-            print(center_text)
-            # divade by <br/>
-            # get html text
-            html_txt = str(center_text)
-            html_txt = html_txt.replace('<center>','').replace('</center>','')
-            html_txt = html_txt.split('<br/>')
-            print(html_txt)
-            # split by <br>
-            center_text = center_text.text.split('<br/>')
-            # for ind,el in enumerate(html_txt):
-            lowwer = html_txt[0].strip().lower()
-            lowwer = lowwer.replace(' ', '-')
-            html_txt[0] = lowwer
-            # lowwer = html_txt[0].lower()
-
-            print(center_text)
-            print(html_txt)
-            primary_collections = html_txt[0]
-            related_collections = str(html_txt[0])
+        # elif real_soup.find('center') != None:
+        #     # get center text in soup_item
+        #     center_text = real_soup.find('center')
+        #     print(center_text)
+        #     # divade by <br/>
+        #     # get html text
+        #     html_txt = str(center_text)
+        #     html_txt = html_txt.replace('<center>','').replace('</center>','')
+        #     html_txt = html_txt.split('<br/>')
+        #     print(html_txt)
+        #     # split by <br>
+        #     center_text = center_text.text.split('<br/>')
+        #     # for ind,el in enumerate(html_txt):
+        #     lowwer = html_txt[0].strip().lower()
+        #     lowwer = lowwer.replace(' ', '-')
+        #     html_txt[0] = lowwer
+        #     # lowwer = html_txt[0].lower()
+        #
+        #     print(center_text)
+        #     print(html_txt)
+        #     primary_collections = html_txt[0]
+        #     related_collections = str(html_txt[0])
 
         else:
             all_a = soup_item.find_all('a')
@@ -1788,17 +1788,17 @@ class ShopifyScrapper:
             # quit()
 
     def webarchive_page_par_page(self,page):
+
         html = page.content()
 
         # make soup
         soup = bs(html, 'html.parser')
-
         # find all links
         links = soup.find_all('a')
         for link in links:
             # print(link)
             link = link.get('href')
-            if link != None and link.find(self.domain) != -1:
+            if link != None: # and link.find(self.domain) != -1
                 print(link)
                 if link.find("?page=") == -1 and link.find(".oembed") == -1 and link.find(".atom") == -1:
                     try:
@@ -1809,16 +1809,23 @@ class ShopifyScrapper:
                         # print('Done')
                         if link not in self.super_webarchive_blog_links:
                             self.super_webarchive_blog_links.append(link)
-                    elif link.find('/products/') != -1 and link.find('/collections/') == -1:
+                    elif link.find('/products/') != -1:
+                        if link.find('/collections/') != -1:
+                            p_pos = link.find('/products/')
+                            c_pos = link.find('/collections/')
+                            link_space = link[c_pos:p_pos]
+                            link = link.replace(link_space,'')
                         if link not in self.super_webarchive_products_links:
                             self.super_webarchive_products_links.append(link)
                     elif link.find('/collections/') != -1 and link.find('/products/') == -1: #  and link.find('facebook') == -1 and link.find('twitter') == -1 and link.find('pinterest') == -1 and link.find('?page=') == -1 and link.find("*/") == -1 and link.find('tagged') == -1 and link.find('screenshot') == -1
+                        # print(f"Collection link {link}")
                         if link not in self.super_webarchive_collections_links:
                             self.super_webarchive_collections_links.append(link)
 
         # click on next page
         page.click('text=Next')
-        time.sleep(1)
+        print('Next page')
+        time.sleep(2)
         # self.webarchive_page_par_page(page)
 
     def call_parent(self,res):
@@ -1949,7 +1956,7 @@ if __name__ == "__main__":
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
     shopify_scrapper.blog_name = "news"
 
-    shopify_scrapper.domain = "https://vintage-styles.fr"
+    shopify_scrapper.domain = "http://bonheur-tibetain.fr"
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
@@ -1969,7 +1976,7 @@ if __name__ == "__main__":
     #
     # shopify_scrapper.scaping_collections_data(all_categpries)
     # # get blog content data
-    # shopify_scrapper.get_blog_content()
+    shopify_scrapper.get_blog_content()
 
 
 
@@ -2003,6 +2010,9 @@ if __name__ == "__main__":
     #
     #     # save to xlsx
     #     wb.save("blog.xlsx")
+
+    # http://bonheur-tibetain.fr/
+    #
 
 
 
