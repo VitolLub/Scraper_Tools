@@ -90,6 +90,9 @@ class ShopifyScrapper:
         self.related_collections_site = ''
         self.variant_price_arr = []
 
+        self.blog_tags_class = 'content-block content-block--small'
+        self.blog_div = 'div'
+
 
 
     def remove_all_none_tags(self,soup):
@@ -374,7 +377,8 @@ class ShopifyScrapper:
         #     related_collections = str(html_txt[0])
 
         else:
-            all_a = soup_item.find_all('a')
+            div = soup_item.find('div', id='SiteNavParent')
+            all_a = div.find_all('a')
 
             diff_percent_arr = {}
             for a in all_a:
@@ -1383,8 +1387,19 @@ class ShopifyScrapper:
                         excerpt = soup.find('meta', property='og:description')['content']
 
                     try:
-                        og_tags = soup.find('meta', property='og:tags')['content']
+                        og_tags = []
+                        # find tags by self.blog_tags_class
+                        tags = soup.find(self.blog_div, class_=self.blog_tags_class)
+                        # get all a
+                        tags = tags.find_all('a')
+                        for tag in tags:
+                            og_tags.append(tag.text.lower())
+                        og_tags = ','.join(og_tags)
+                        print('===============')
                         print(og_tags)
+                        print('===============')
+                        # og_tags = soup.find('meta', property='og:tags')['content']
+                        # print(og_tags)
                     except:
                         og_tags = ''
 
@@ -1501,6 +1516,7 @@ class ShopifyScrapper:
                         print(desc_html_full)
 
 
+
                     except Exception as e:
                         print(e)
                         print(f"Error desc_html_full ")
@@ -1523,9 +1539,7 @@ class ShopifyScrapper:
                     feature_image = self.feature_images(soup)
                     print(feature_image)
                     self.blog_feature_image.append(feature_image)
-                    # Categories = ''
-                    # desc_text = ''
-                    # desc_html = ''
+                    print(og_tags)
                     self.save_blog_data_to_xlsx(fff_link,blog_handle,ceo_title,Categories,ceo_desc,title_text,title_html,desc_text_full,desc_html_full,feature_image,excerpt,og_tags)
                 except Exception as e:
                     print(e)
@@ -1566,7 +1580,7 @@ class ShopifyScrapper:
             sheet = wb.worksheets[0]
 
             # max row
-
+            print(f"og_tags = {og_tags}")
             next_row = sheet.max_row + 1
             ws.cell(row=next_row, column=1, value=str(link).strip())
             ws.cell(row=next_row, column=2, value=str(handle).strip())
@@ -1952,11 +1966,14 @@ class ShopifyScrapper:
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
     shopify_scrapper.webarchive = True
-    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20210624061727/"
+    shopify_scrapper.webarchive_url = "http://web.archive.org/web/20230202000000/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
-    shopify_scrapper.blog_name = "news"
+    shopify_scrapper.blog_name = "blog-cocktails"
+    shopify_scrapper.blog_tags_class = 'content-block content-block--small'
+    shopify_scrapper.blog_div = 'div'
 
-    shopify_scrapper.domain = "http://bonheur-tibetain.fr"
+
+    shopify_scrapper.domain = "https://cocktail-paradis.com"
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
@@ -1970,12 +1987,12 @@ if __name__ == "__main__":
         all_categpries = shopify_scrapper.get_menu_links()
 
 
-    shopify_scrapper.scrap_shopify(all_categpries)
-    shopify_scrapper.clean_duplicates()
-    shopify_scrapper.check_desc()
-    #
+    # shopify_scrapper.scrap_shopify(all_categpries)
+    # shopify_scrapper.clean_duplicates()
+    # shopify_scrapper.check_desc()
+    # #
     # shopify_scrapper.scaping_collections_data(all_categpries)
-    # # get blog content data
+    # get blog content data
     shopify_scrapper.get_blog_content()
 
 
@@ -2012,7 +2029,7 @@ if __name__ == "__main__":
     #     wb.save("blog.xlsx")
 
     # http://bonheur-tibetain.fr/
-    #
+    # https://cocktail-paradis.com/
 
 
 
