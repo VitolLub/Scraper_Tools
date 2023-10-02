@@ -1973,7 +1973,7 @@ if __name__ == "__main__":
     shopify_scrapper.blog_div = 'div'
 
 
-    shopify_scrapper.domain = "https://cocktail-paradis.com"
+    shopify_scrapper.domain = "https://le-japonais-kawaii.com"
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
@@ -1991,9 +1991,9 @@ if __name__ == "__main__":
     # shopify_scrapper.clean_duplicates()
     # shopify_scrapper.check_desc()
     # #
-    # shopify_scrapper.scaping_collections_data(all_categpries)
+    shopify_scrapper.scaping_collections_data(all_categpries)
     # get blog content data
-    shopify_scrapper.get_blog_content()
+    # shopify_scrapper.get_blog_content()
 
 
 
