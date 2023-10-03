@@ -10,7 +10,7 @@ from playwright.sync_api import sync_playwright
 import random
 import os
 from difflib import SequenceMatcher
-
+import xmltodict
 
 class ShopifyScrapper:
 
@@ -92,6 +92,8 @@ class ShopifyScrapper:
 
         self.blog_tags_class = 'content-block content-block--small'
         self.blog_div = 'div'
+
+        self.sitemap_link = ''
 
 
 
@@ -791,7 +793,7 @@ class ShopifyScrapper:
 
     def cut_compare_price(self,compare_at_price):
 
-        if compare_at_price != 0:
+        if compare_at_price != 0 and len(str(compare_at_price)) > 2:
             a = str(compare_at_price)
             pos2 = a[len(a) - 2:]
             pos1 = a[:len(a) - 2]
@@ -1051,7 +1053,10 @@ class ShopifyScrapper:
             for fill_link in self.super_webarchive_products_links:
                 # try:
                 print(f"Link origin {fill_link}")
-                fill_link = self.webarchive_url_domain + fill_link
+                if self.webarchive == True:
+                    fill_link = self.webarchive_url_domain + fill_link
+                elif self.webarchive == False:
+                    fill_link = fill_link
                 self.request_link_by_link(fill_link)
 
                 print("++++++++++++")
@@ -1960,12 +1965,32 @@ class ShopifyScrapper:
 
         wb.save("shopify2.xlsx")
 
-                
+    def scrap_sitemap_link(self):
+        # make request to sitemap link
+        url = self.domain + "/"+self.sitemap_link
+        print(url)
+        response = requests.get(url, timeout=90)
+        print(response.status_code)
+        # get data
+        if response.status_code == 200:
+            data = response.text
+            print(type(data))
+
+            # str to json
+            data = xmltodict.parse(data)
+
+            all_link = data['urlset']['url']
+
+            for link in all_link:
+                self.super_webarchive_products_links.append(link['loc'])
+
+            print(len(self.super_webarchive_products_links))
+
 
 
 if __name__ == "__main__":
     shopify_scrapper = ShopifyScrapper()
-    shopify_scrapper.webarchive = True
+    shopify_scrapper.webarchive = False
     shopify_scrapper.webarchive_url = "http://web.archive.org/web/20230202000000/"
     shopify_scrapper.webarchive_url_domain = "http://web.archive.org"
     shopify_scrapper.blog_name = "blog-cocktails"
@@ -1973,7 +1998,8 @@ if __name__ == "__main__":
     shopify_scrapper.blog_div = 'div'
 
 
-    shopify_scrapper.domain = "https://le-japonais-kawaii.com"
+    shopify_scrapper.domain = "https://traditions-de-chine.com"
+    shopify_scrapper.sitemap_link = 'sitemap_products_1.xml?from=6695409156249&to=6820545462425'
     all_categpries = []
     if shopify_scrapper.webarchive == True:
         shopify_scrapper.scrap_webarchive()
@@ -1984,14 +2010,16 @@ if __name__ == "__main__":
 
     shopify_scrapper.create_xls_file()
     if shopify_scrapper.webarchive == False:
-        all_categpries = shopify_scrapper.get_menu_links()
+        # all_categpries = shopify_scrapper.get_menu_links()
+        # get full list of links
+        shopify_scrapper.scrap_sitemap_link()
 
 
-    # shopify_scrapper.scrap_shopify(all_categpries)
-    # shopify_scrapper.clean_duplicates()
-    # shopify_scrapper.check_desc()
+    shopify_scrapper.scrap_shopify(all_categpries)
+    shopify_scrapper.clean_duplicates()
+    shopify_scrapper.check_desc()
     # #
-    shopify_scrapper.scaping_collections_data(all_categpries)
+    # shopify_scrapper.scaping_collections_data(all_categpries)
     # get blog content data
     # shopify_scrapper.get_blog_content()
 
