@@ -95,6 +95,10 @@ class ShopifyScrapper:
 
         self.sitemap_link = ''
 
+        self.menu_tag = ''
+        self.menu_id = ''
+        self.menu_selector_value = ''
+
 
 
     def remove_all_none_tags(self,soup):
@@ -329,7 +333,7 @@ class ShopifyScrapper:
         return full_description_html_primary
 
 
-    def get_collections_related(self,title,soup_item,real_soup):
+    def get_collections_related(self,title,soup_item,real_soup,product_data):
         title_arr = title.split('<br>')
         # print("+================")
         # print(title_arr[0])
@@ -337,9 +341,35 @@ class ShopifyScrapper:
         primary_collections = ''
         related_collections = ''
         # find 'Catégories' text in soup_item
-        cat_text = real_soup.find('div',class_='collection-product-list')
-
-        if cat_text != None:
+        menu_tag = str(self.menu_tag)
+        menu_selector_value = 'div'
+        cat_text = real_soup.find(menu_tag,id='some_menu')
+        if product_data['description'].find('collections') != -1:
+            print("product_data['description'].find('collections')")
+            # get all links from product_data['description']
+            description = product_data['description']
+            # str to soup
+            description = bs(description, 'html.parser')
+            # find all a
+            all_a = description.find_all('a')
+            for a in all_a:
+                href = a.get('href')
+                # print(href)
+                if href != None:
+                    if href.find('/collections/') != -1:
+                        # print(href)
+                        # cut collection from href
+                        c_p = href.find('/collections/')
+                        p_p = href.find('/product')
+                        collection = href[c_p+13:p_p]
+                        # print(f"Real collection {collection}")
+                        if len(primary_collections) == 0:
+                            primary_collections = str(collection)
+                        if len(related_collections) == 0:
+                            related_collections += str(collection)
+                        else:
+                            related_collections += ","+str(collection)
+        elif cat_text != None:
             # find all a
             cat_text = cat_text.find_all('a')
             for text in cat_text:
@@ -379,7 +409,7 @@ class ShopifyScrapper:
         #     related_collections = str(html_txt[0])
 
         else:
-            div = soup_item.find('div', id='SiteNavParent')
+            div = soup_item.find(self.menu_tag, id=self.menu_selector_value)
             all_a = div.find_all('a')
 
             diff_percent_arr = {}
@@ -415,7 +445,7 @@ class ShopifyScrapper:
                             related_collections = self.find_ul_data(aa, related_collections)
                             break
                     except:
-                        pass
+                        print(f"some err")
 
         return primary_collections,related_collections
 
@@ -547,7 +577,7 @@ class ShopifyScrapper:
                     primary_collections = ''
                     related_collections = ''
                     try:
-                        primary_collections,related_collections = self.get_collections_related(product_title,soup_item,real_soup)
+                        primary_collections,related_collections = self.get_collections_related(product_title,soup_item,real_soup,product_data)
                         print(primary_collections,related_collections)
                     except Exception as e:
                         print(e)
@@ -1074,7 +1104,7 @@ class ShopifyScrapper:
                     print("Error on line {}".format(sys.exc_info()[-1].tb_lineno))
                 index += 1
                 print(f"Prim INDEX = {index}")
-                # if index == 10:
+                # if index == 20:
                 #     break
 
         elif len(all_categpries) > 0:
@@ -1996,6 +2026,10 @@ if __name__ == "__main__":
     shopify_scrapper.blog_name = "blog-cocktails"
     shopify_scrapper.blog_tags_class = 'content-block content-block--small'
     shopify_scrapper.blog_div = 'div'
+
+    shopify_scrapper.menu_tag = 'div'
+    shopify_scrapper.menu_id = 'id'
+    shopify_scrapper.menu_selector_value = 'SiteNavParent'
 
 
     shopify_scrapper.domain = "https://traditions-de-chine.com"
